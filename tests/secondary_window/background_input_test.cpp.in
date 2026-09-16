@@ -1,0 +1,55 @@
+#include "common/rt64_wr64_separate_windows.h"
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+
+namespace recompui::config::general {
+bool saved_background_preference = false;
+bool get_background_input_mode_enabled() { return saved_background_preference; }
+}
+constexpr const char* SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS = "background";
+std::string hint;
+int hint_writes = 0;
+bool SDL_SetHint(const char*, const char* value) { hint = value; ++hint_writes; return true; }
+
+@NATIVE_MODE_FUNCTION@
+
+int checks = 0;
+void check(bool condition, const char* message) {
+    ++checks;
+    if (!condition) { std::fprintf(stderr, "FAILED: %s\n", message); std::exit(1); }
+}
+int main() {
+    using namespace recompui::config::general;
+    apply_background_input_mode();
+    check(hint == "0" && hint_writes == 1, "saved off initializes SDL hint off");
+    RT64::wr64SecondaryWindowFocused = true;
+    apply_background_input_mode();
+    check(hint == "1" && hint_writes == 2 && !saved_background_preference,
+        "secondary focus enables polling without saving preference");
+    apply_background_input_mode();
+    check(hint_writes == 2, "unchanged focus does not repeat hint writes");
+    RT64::wr64SecondaryWindowFocused = false;
+    apply_background_input_mode();
+    check(hint == "0" && hint_writes == 3 && !saved_background_preference,
+        "other application focus restores saved off");
+    saved_background_preference = true;
+    apply_background_input_mode();
+    check(hint == "1" && hint_writes == 4, "explicit saved on remains effective");
+    RT64::wr64SecondaryWindowFocused = true;
+    apply_background_input_mode();
+    RT64::wr64SecondaryWindowFocused = false;
+    apply_background_input_mode();
+    check(hint == "1" && hint_writes == 4 && saved_background_preference,
+        "focus changes preserve saved on");
+    RT64::wr64SecondaryWindowFocused = true;
+    saved_background_preference = false;
+    apply_background_input_mode();
+    check(hint == "1" && hint_writes == 4 && !saved_background_preference,
+        "preference can change while secondary focused");
+    RT64::wr64SecondaryWindowFocused = false;
+    apply_background_input_mode();
+    check(hint == "0" && hint_writes == 5 && !saved_background_preference,
+        "latest saved preference restored after secondary focus ends");
+    std::printf("PASS: %d actual-function transient background input checks; no config or SDL calls.\n", checks);
+}

@@ -1,0 +1,40 @@
+# Wave Race 64: Recompiled - controller mappings.
+#
+# SDL only raises SDL_CONTROLLERDEVICEADDED for a device it holds a mapping for,
+# and recompinput learns about controllers from that event and nothing else. A
+# pad missing from here is invisible to the game: it cannot be assigned to a
+# player, and nothing anywhere says why.
+#
+# SDL 2.26.3's built-in database already covers the 8BitDo USB receiver
+# (2DC8:3106), so only the Bluetooth modkit needs a line.
+#
+# Every value below was MEASURED by pressing the button - MAP-N64-MODKIT-R1.ps1
+# for the fourteen N64 inputs, IDENTIFY-BUTTON-R1.ps1 for ZR. Nothing is guessed.
+#
+# 8BitDo N64 Modkit, 2DC8:2869, Bluetooth HID. 6 axes, 16 buttons, 1 hat.
+#
+#   a:b0             N64 A          -> recompinput reads SOUTH
+#   x:b1             N64 B          -> reads WEST
+#   back:b9          modkit ZR      -> TOGGLE_MENU. Not an N64 button at all;
+#                                      the pad has no Select, so the modkit's
+#                                      spare shoulder opens the settings menu.
+#   start:b11        N64 Start
+#   leftshoulder:b6  N64 L
+#   lefttrigger:b8   N64 Z          -> read as analog triggers. Both are digital
+#   righttrigger:b7  N64 R             buttons; SDL synthesises full deflection.
+#   rightx:a3        N64 C-left / C-right
+#   righty:a4        N64 C-up / C-down
+#   dp*:h0.*         N64 D-pad      -> hat values 1/2/4/8 = up/right/down/left
+#   leftx:a0
+#   lefty:a1         N64 analog stick, neither axis inverted
+#
+# THE C-BUTTONS ARE AN AXIS PAIR ON THIS PAD, NOT FOUR BUTTONS. That is why they
+# are rightx/righty rather than the y/b/rightstick/rightshoulder a digital
+# C-cluster would need. recompinput's DEFAULT C-button bindings are
+# controller_analog(RIGHTX/RIGHTY, +/-), so this drives them directly with no
+# rebinding - and the measured signs match SDL's convention exactly: C-right is
+# +a3, C-down is +a4.
+#
+# STILL UNUSED: buttons b2 b3 b4 b5 b10 b12 b13 b14 b15, axes a2 a5.
+# Free for guide, or for anything a later stage wants.
+030095fcc82d00006928000000000000,8BitDo N64 Modkit,a:b0,x:b1,back:b9,start:b11,leftshoulder:b6,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:b8,righttrigger:b7,platform:Windows,

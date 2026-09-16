@@ -1,0 +1,41 @@
+# Build output
+/build/
+/b-*/
+/out/
+/dist/
+
+# Runtime state written next to the executable (settings, saves, ROM copy)
+.runtime/
+
+# Local diagnostic captures and generated trace output
+.diagnostics/
+__pycache__/
+*.log
+wr64-water-sheet.csv
+CON
+
+# ROMs are never part of this repository
+*.z64
+*.n64
+*.v64
+*.rom
+*.sav
+*.eep
+*.mpk
+
+# Private credentials and local exports
+.env
+.env.*
+*.credentials
+*.pem
+*.key
+*.pdb
+*.dmp
+
+# Editor / OS
+.vs/
+.vscode/
+.idea/
+*.user
+Thumbs.db
+.DS_Store

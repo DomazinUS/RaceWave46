@@ -1,0 +1,20 @@
+RaceWave46 license scope
+
+Copyright (c) 2026 RaceWave46 contributors.
+
+Original RaceWave46 contributions are licensed under the GNU General Public
+License, version 3 only (SPDX-License-Identifier: GPL-3.0-only). You may copy,
+modify and redistribute those contributions under that license. The complete
+license is in COPYING. They are provided without warranty, including any
+implied warranty of merchantability or fitness for a particular purpose.
+
+This grant covers only copyright held by the RaceWave46 contributors. It does
+not replace third-party licenses or claim ownership of upstream code, Nintendo
+game code, ROM-derived/generated game code, game assets, logos or trademarks.
+Those materials retain their respective rights and license terms. No rights
+to a game ROM or Nintendo material are granted by this file.
+
+Vendored libraries, including locally modified copies, retain their upstream
+notices. The project grant applies only to original RaceWave46 additions in
+such files, subject to the applicable upstream terms. See THIRD-PARTY-NOTICES.md
+for component notices, documented provenance and any unresolved scope.

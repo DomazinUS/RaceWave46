@@ -1,0 +1,62 @@
+[
+  {
+    "capture": 1,
+    "ram_path": "capture-20260728-034653/rdram.bin",
+    "ram_sha256": "8119910f6e5da06503a412adf360a41d29f9d7ed1a706089e410689dd3245b9d",
+    "native_output_path": "radius-capture-1.jsonl",
+    "native_output_sha256": "42691895881a3800526bfb0a43e29ab3a2f658598ade3d3f8e4137f24f213ece",
+    "native_radius": 3000,
+    "camera_address": "0x80227c80",
+    "view_address": "0x80146958",
+    "projection_address": "0x801468d8",
+    "authored_fov": 75.0
+  },
+  {
+    "capture": 2,
+    "ram_path": "capture-20260728-040925/rdram.bin",
+    "ram_sha256": "129e385b4051d07961c9569d732f795a6cf657e6817aaa7541805841c1a8de93",
+    "native_output_path": "radius-capture-2.jsonl",
+    "native_output_sha256": "89b985acc2553c9b121dc741e8edcf5341e388b63ca2684c354ccbc83053c6d6",
+    "native_radius": 3000,
+    "camera_address": "0x80227c80",
+    "view_address": "0x8012d970",
+    "projection_address": "0x8012d8f0",
+    "authored_fov": 59.999996185302734
+  },
+  {
+    "capture": 3,
+    "ram_path": "capture-20260729-000900/rdram.bin",
+    "ram_sha256": "89c56cd26e8227a150b6e7a460519e981d7fdb94d6c78db4783e300b1712aa09",
+    "native_output_path": "radius-capture-3.jsonl",
+    "native_output_sha256": "b12e9b0c45d2e98564fb47a34e6de4ee6ded7fa53b46d22a22d868c1b50a2e61",
+    "native_radius": 3000,
+    "camera_address": "0x80227c80",
+    "view_address": "0x8012d970",
+    "projection_address": "0x8012d8f0",
+    "authored_fov": 75.0
+  },
+  {
+    "capture": 4,
+    "ram_path": "capture-20260728-205118/rdram.bin",
+    "ram_sha256": "db79bc647aa9ee2bb0fadefbcb5a6a34e46a7a92264e3982b8e728a7603b8f9d",
+    "native_output_path": "radius-capture-4.jsonl",
+    "native_output_sha256": "5ba660df994bdee89dba0a94580bb00b3a936cbe70aa212610535ffab795e03e",
+    "native_radius": 3000,
+    "camera_address": "0x80227c80",
+    "view_address": "0x8012d970",
+    "projection_address": "0x8012d8f0",
+    "authored_fov": 50.0
+  },
+  {
+    "capture": 5,
+    "ram_path": "capture-20260728-202327/rdram.bin",
+    "ram_sha256": "3b5e736dcfbd22615e2e4302d24cae2c592e76eff4af7906410683648c52a4c9",
+    "native_output_path": "radius-capture-5.jsonl",
+    "native_output_sha256": "30dd7f730b57dd21d21335bc353337f122130771bf6a7dc74d9e95c28688d6ed",
+    "native_radius": 3000,
+    "camera_address": "0x80227c80",
+    "view_address": "0x8012d970",
+    "projection_address": "0x8012d8f0",
+    "authored_fov": 75.0
+  }
+]

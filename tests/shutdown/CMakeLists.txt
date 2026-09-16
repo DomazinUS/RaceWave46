@@ -1,0 +1,60 @@
+cmake_minimum_required(VERSION 3.20)
+project(wr64_shutdown_tests LANGUAGES CXX)
+enable_testing()
+get_filename_component(WR64_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+set(RUNTIME_SOURCE "${WR64_ROOT}/lib/N64ModernRuntime/librecomp/src/recomp.cpp")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${RUNTIME_SOURCE}")
+file(READ "${RUNTIME_SOURCE}" RUNTIME_TEXT)
+# The real quit function is small and has no nested blocks. Fail at compile
+# time if its shape changes instead of silently testing a reimplemented copy.
+string(REGEX MATCH "void ultramodern::quit\\(\\) \\{[^}]*\\}" QUIT_BODY "${RUNTIME_TEXT}")
+if(NOT QUIT_BODY)
+    message(FATAL_ERROR "Cannot extract the actual runtime quit function")
+endif()
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/runtime_quit.inc" "${QUIT_BODY}\n")
+# The exporter reads live RDRAM, so its join must precede runtime memory free.
+string(FIND "${RUNTIME_TEXT}" "ultramodern::join_saving_thread();" SAVE_JOIN)
+if(SAVE_JOIN LESS 0)
+    message(FATAL_ERROR "Cannot locate runtime shutdown joins")
+endif()
+string(SUBSTRING "${RUNTIME_TEXT}" ${SAVE_JOIN} -1 TEARDOWN_TEXT)
+string(FIND "${TEARDOWN_TEXT}" "wr64_forensic_shutdown();" EXPORT_JOIN)
+string(FIND "${TEARDOWN_TEXT}" "VirtualFree(rdram, 0, MEM_RELEASE)" MEMORY_FREE)
+if(EXPORT_JOIN LESS 0 OR MEMORY_FREE LESS 0 OR EXPORT_JOIN GREATER MEMORY_FREE)
+    message(FATAL_ERROR "Forensic export must finish after runtime joins and before RDRAM free")
+endif()
+add_executable(shutdown_pause_test shutdown_pause_test.cpp)
+target_compile_features(shutdown_pause_test PRIVATE cxx_std_20)
+target_include_directories(shutdown_pause_test PRIVATE "${WR64_ROOT}" "${WR64_ROOT}/include" "${CMAKE_CURRENT_BINARY_DIR}")
+target_compile_definitions(shutdown_pause_test PRIVATE NOMINMAX)
+add_test(NAME shutdown_releases_forensic_pause COMMAND shutdown_pause_test)
+set_tests_properties(shutdown_releases_forensic_pause PROPERTIES TIMEOUT 10)
+
+if(WIN32)
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    set(FILTER_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/event_filter.inc")
+    add_custom_command(OUTPUT "${FILTER_SOURCE}"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_LIST_DIR}/extract_event_filter.py" "${WR64_ROOT}" "${FILTER_SOURCE}"
+        DEPENDS extract_event_filter.py
+            "${WR64_ROOT}/lib/rt64/src/hle/rt64_application_window.cpp"
+            "${WR64_ROOT}/lib/rt64/src/hle/rt64_application_window.h"
+            "${WR64_ROOT}/lib/rt64/src/hle/rt64_application.cpp"
+        VERBATIM)
+    set(SDL_ROOT "${WR64_ROOT}/lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3")
+    add_executable(shutdown_event_filter_test shutdown_event_filter_test.cpp "${FILTER_SOURCE}")
+    target_compile_features(shutdown_event_filter_test PRIVATE cxx_std_20)
+    target_compile_definitions(shutdown_event_filter_test PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_include_directories(shutdown_event_filter_test PRIVATE "${SDL_ROOT}/include" "${CMAKE_CURRENT_BINARY_DIR}")
+    target_link_libraries(shutdown_event_filter_test PRIVATE "${SDL_ROOT}/lib/x64/SDL2.lib")
+    add_custom_command(TARGET shutdown_event_filter_test POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SDL_ROOT}/lib/x64/SDL2.dll" "$<TARGET_FILE_DIR:shutdown_event_filter_test>")
+    add_test(NAME shutdown_stops_renderer_event_filter COMMAND shutdown_event_filter_test)
+    set_tests_properties(shutdown_stops_renderer_event_filter PROPERTIES TIMEOUT 10)
+    add_executable(shutdown_message_test shutdown_message_test.cpp)
+    target_compile_features(shutdown_message_test PRIVATE cxx_std_20)
+    target_include_directories(shutdown_message_test PRIVATE ../../lib/N64ModernRuntime/ultramodern/include)
+    target_compile_definitions(shutdown_message_test PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_link_libraries(shutdown_message_test PRIVATE user32)
+    add_test(NAME shutdown_services_sent_messages COMMAND shutdown_message_test)
+    set_tests_properties(shutdown_services_sent_messages PROPERTIES TIMEOUT 10)
+endif()

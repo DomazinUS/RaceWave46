@@ -1,0 +1,31 @@
+/*
+ * Wave Race 64: Recompiled - recompui stylesheet.
+ *
+ * MINIMAL, DELIBERATELY. Almost none of recompui's appearance comes from here:
+ * the look is a C++ theme (recompui::theme) with ~90 named colours, border
+ * radii and typography presets, all of which already have defaults. This file
+ * only has to give the document its base text style, which RmlUi cannot infer.
+ *
+ * The font-family below MUST be the font's INTERNAL family name, which RmlUi
+ * reads from the TTF's name table - not the filename, and not what the filename
+ * looks like it implies. LatoLatin-Regular.ttf reports:
+ *
+ *     nameID 1 (Family)      = "LatoLatin"
+ *     nameID 4 (Full name)   = "LatoLatin Regular"
+ *     nameID 6 (PostScript)  = "LatoLatin-Regular"
+ *
+ * It is "LatoLatin". Getting this wrong does not warn and does not fall back:
+ * RmlUi simply resolves no font face and every piece of text renders as
+ * nothing at all, while the panels, sliders and layout draw perfectly.
+ *
+ * This is loaded at RUN time from assets/, so changing it costs a re-run and
+ * not a rebuild.
+ */
+
+body {
+    font-family: LatoLatin;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20dp;
+    color: #ffffff;
+}

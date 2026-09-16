@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" role="img" aria-labelledby="title desc">
+  <title id="title">RaceWave46 — Back on the water</title>
+  <desc id="desc">An ocean-blue RaceWave46 banner celebrating Wave Race 64 on modern PCs, with flowing water lines and warm gold accents.</desc>
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071c31"/><stop offset=".6" stop-color="#073c51"/><stop offset="1" stop-color="#076b7b"/></linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#66e7e4" stop-opacity=".08"/><stop offset=".6" stop-color="#66e7e4" stop-opacity=".35"/><stop offset="1" stop-color="#d7fafa" stop-opacity=".12"/></linearGradient>
+    <radialGradient id="sun"><stop stop-color="#e3bd68" stop-opacity=".28"/><stop offset="1" stop-color="#e3bd68" stop-opacity="0"/></radialGradient>
+    <clipPath id="edge"><rect width="1600" height="420" rx="22"/></clipPath>
+  </defs>
+  <g clip-path="url(#edge)">
+    <rect width="1600" height="420" fill="url(#sea)"/>
+    <ellipse cx="1390" cy="36" rx="450" ry="310" fill="url(#sun)"/>
+    <g fill="none" stroke="url(#wave)">
+      <path d="M750 273 C970 129 1120 328 1315 204 S1600 117 1740 196" stroke-width="3"/>
+      <path d="M697 294 C934 155 1100 355 1334 231 S1634 146 1750 223" stroke-width="2"/>
+      <path d="M662 319 C915 189 1108 380 1348 258 S1660 178 1760 251" stroke-width="2"/>
+      <path d="M612 347 C882 222 1091 408 1367 289 S1682 204 1770 283" stroke-width="2"/>
+      <path d="M563 379 C851 253 1114 439 1383 323 S1705 237 1780 316" stroke-width="2"/>
+      <path d="M500 409 C847 286 1117 476 1404 356 S1728 270 1790 350" stroke-width="2"/>
+    </g>
+    <path d="M0 393 Q350 348 700 398 T1600 379 V420 H0Z" fill="#0ab7c2" opacity=".1"/>
+    <rect x="78" y="68" width="60" height="4" rx="2" fill="#ecc87e"/>
+    <text x="158" y="79" font-family="Segoe UI,Arial,sans-serif" font-size="23" font-weight="600" letter-spacing="5" fill="#ecc87e">BACK ON THE WATER</text>
+    <text x="75" y="217" font-family="Segoe UI,Arial,sans-serif" font-size="106" font-weight="800" letter-spacing="-4" fill="#f4fbff">RaceWave<tspan fill="#78e6e5">46</tspan></text>
+    <text x="81" y="280" font-family="Segoe UI,Arial,sans-serif" font-size="29" fill="#c7e3ed">Wave Race 64, recompiled for modern PCs.</text>
+    <text x="83" y="350" font-family="Segoe UI,Arial,sans-serif" font-size="19" letter-spacing="3" fill="#95c5d3">WINDOWS  /  WIDESCREEN  /  LOCAL MULTIPLAYER</text>
+    <g transform="translate(1386 127)" fill="none" stroke="#eed59a" stroke-width="2" opacity=".78">
+      <circle r="53"/><circle r="63" opacity=".35"/>
+      <path d="M-33 7 Q-17 -15 0 7 T33 7 M-33 22 Q-17 0 0 22 T33 22"/>
+    </g>
+    <rect x="1" y="1" width="1598" height="418" rx="21" fill="none" stroke="#4595a1" stroke-opacity=".4" stroke-width="2"/>
+  </g>
+</svg>

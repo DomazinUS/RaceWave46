@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "snapshot": "RaceWave46 v1.0.0 source",
+  "snapshot_archive": "WaveRace64-USA-Manual-RT-RC6-source.zip",
+  "snapshot_archive_sha256": "e1681cef02d8df2d5b5bbed82722dfd6dd708bfbed0eb91a398d2aae235ab51e",
+  "meaning": "Revision references record available provenance, not a claim that a modified vendored tree equals an upstream checkout. The rc6_archive fields identify the archival input before cleanup and the accepted API fixes. The packaged fields identify the final v1.0.0 source components; bundled source and build instructions are authoritative.",
+  "digest_algorithm": "SHA256 of sorted UTF-8 relative path + NUL + lowercase file SHA256 + LF, for every regular archive entry under the component path.",
+  "components": [
+    {
+      "name": "N64ModernRuntime",
+      "path": "lib/N64ModernRuntime",
+      "upstream_url": "https://github.com/N64Recomp/N64ModernRuntime",
+      "revision": "a39b4b60f02e18e65569c90450db464616b7dbf2",
+      "revision_basis": "local dependency checkout HEAD; archive contents may include local modifications",
+      "rc6_archive_file_count": 1192,
+      "rc6_archive_tree_sha256": "a665d3bd62fc6cd0d42b74600b2b68f54aaf4ff44f0d92dea3fea349d26a3604",
+      "packaged_file_count": 1119,
+      "packaged_tree_sha256": "32483cbe3858e0844576c745daaf7e22cfeb70586504669e5181019463c4279e"
+    },
+    {
+      "name": "N64Recomp",
+      "path": "lib/N64ModernRuntime/N64Recomp",
+      "upstream_url": "https://github.com/N64Recomp/N64Recomp",
+      "revision": "81213c1831fab2521a6a5459c67b63437d67e253",
+      "revision_basis": "N64ModernRuntime HEAD gitlink; vendored archive content is authoritative",
+      "rc6_archive_file_count": 959,
+      "rc6_archive_tree_sha256": "d9c81e014cc9dc54c069a4bc8fde412973b621de155b298d6c0d1b37c0d9a479",
+      "packaged_file_count": 908,
+      "packaged_tree_sha256": "e2ced57f4353b8ded604a34e5f76bc1a0fee4531c824aea255530e6e757b3096"
+    },
+    {
+      "name": "RT64",
+      "path": "lib/rt64",
+      "upstream_url": "https://github.com/cdlewis/rt64",
+      "revision": "6bd6c1882e7a013189429d0318c37f2cd7c2c8b6",
+      "revision_basis": "local dependency checkout HEAD; locally modified fork of https://github.com/rt64/rt64",
+      "rc6_archive_file_count": 10388,
+      "rc6_archive_tree_sha256": "99e35c58f3d7f67df0fd22238198a4e05b9c04130a9c94cfc282ad58f3a9d1ef",
+      "packaged_file_count": 7748,
+      "packaged_tree_sha256": "b495d624c856a1f60e614cb5c42c8c5dc430deca07e4a77e44a092479d3c07d0"
+    },
+    {
+      "name": "RecompFrontend",
+      "path": "lib/RecompFrontend",
+      "upstream_url": "https://github.com/N64Recomp/RecompFrontend",
+      "revision": null,
+      "revision_basis": "vendored directory; no independent git metadata or exact upstream revision established",
+      "rc6_archive_file_count": 1401,
+      "rc6_archive_tree_sha256": "e6b5254e161a5cca7eaa45fd4240538dea8c35ea3dff4f705cf6c2c246d8855c",
+      "packaged_file_count": 1360,
+      "packaged_tree_sha256": "f2acdb6e5ff3e6dc599d1957443be5369d0ec155108924c28f39f49ee3774ede"
+    },
+    {
+      "name": "rcheevos",
+      "path": "lib/rcheevos",
+      "upstream_url": "https://github.com/RetroAchievements/rcheevos",
+      "revision": "c28462eafdbeb881a1d442754dd17aae5c4ab834",
+      "revision_basis": "pinned upstream revision recorded in archived UPSTREAM.md; local CMake integration",
+      "rc6_archive_file_count": 68,
+      "rc6_archive_tree_sha256": "3e4bb2ba94064aa7d4038b0697df71a032bf034130d626b31e96559f8e07c3fb",
+      "packaged_file_count": 67,
+      "packaged_tree_sha256": "47cb451433cc3f0cc7ae83f17d11e0db544e089707a1a65d5e470361cff629ed"
+    },
+    {
+      "name": "FreeType Windows binaries",
+      "path": "lib/RecompFrontend/recompui/lib/freetype-windows-binaries",
+      "upstream_url": "https://github.com/ubawurinna/freetype-windows-binaries",
+      "revision": null,
+      "revision_basis": "FreeType 2.14.1 from archived README and freetype.h; supplied prebuilt static library",
+      "rc6_archive_file_count": 85,
+      "rc6_archive_tree_sha256": "a22e906bdeca74427ca32a978927c7f1d4cae8574096f9fd4bd05e01bc70d11b",
+      "packaged_file_count": 59,
+      "packaged_tree_sha256": "b9470df43f060a318344f3672125921114c92ffe44374e89c2e3d4933b064227"
+    },
+    {
+      "name": "DirectX Shader Compiler",
+      "path": "lib/rt64/src/contrib/dxc",
+      "upstream_url": "https://github.com/microsoft/DirectXShaderCompiler",
+      "revision": "0dc8d9060df41901dbfa5ad7190da03e33d09518",
+      "revision_basis": "The archived dxcompiler.dll version 1.7.0.4147 identifies this historical source commit. Those obsolete Windows compiler binaries are excluded; the current matched build/runtime toolchain is recorded separately in external_dxc_toolchain.",
+      "rc6_archive_file_count": 17,
+      "rc6_archive_tree_sha256": "b05ac59a7e9ef66606452706fc8ff94c8a1e43954bc4d0c2d177ceb29561e072",
+      "packaged_file_count": 14,
+      "packaged_tree_sha256": "feed28f5d7cc786dc848956cccb027822c2ff78de853c6f3d11c38f28bbf77cc"
+    }
+  ],
+  "packaged_digest_algorithm": "SHA256 of sorted UTF-8 file paths relative to the component directory + NUL + lowercase file SHA256 + LF, for every packaged regular file under that directory.",
+  "packaged_release": "v1.0.0",
+  "external_dxc_toolchain": {
+    "source_url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.8.2502/dxc_2025_02_20.zip",
+    "archive_sha256": "70b1913a1bfce4a3e1a5311d16246f4ecdf3a3e613abec8aa529e57668426f85",
+    "version": "1.8.2502",
+    "files": [
+      {
+        "archive_entry": "bin/x64/dxc.exe",
+        "file_sha256": "ae4bf100b8c64ab03cdc0ee5996d5f212e96c59d6d37340359342d714ac6c004"
+      },
+      {
+        "archive_entry": "bin/x64/dxcompiler.dll",
+        "file_sha256": "f79943b02f73b621421b58a569fd6ee120d0023fb6bfa23844ecad6b00d6a295"
+      },
+      {
+        "archive_entry": "bin/x64/dxil.dll",
+        "file_sha256": "62736e99aa534a942873f92b881a71b2cb6ad62b8d7481ea7a8ad8e9888a8056"
+      }
+    ],
+    "license": "University of Illinois/NCSA (LICENSE-LLVM.txt), as assigned by this release's per-file license table.",
+    "license_notice": "lib/rt64/src/contrib/dxc/validator-1.8.2502/LICENSE-LLVM.txt",
+    "release_license_mapping": "lib/rt64/src/contrib/dxc/validator-1.8.2502/RELEASE-NOTES.txt",
+    "compiler_license": "lib/rt64/src/contrib/dxc/validator-1.8.2502/LICENSE.TXT",
+    "third_party_notices": "lib/rt64/src/contrib/dxc/validator-1.8.2502/ThirdPartyNotices.txt",
+    "notice": "The matched compiler, runtime library and validator are acquired together and checked individually. They build Direct3D and default SPIR-V shaders; selected framebuffer and Wave Race SPIR-V shaders continue to use the separate pinned Vulkan compiler. No 1.8.2502 tool binary is included in this source archive."
+  },
+  "external_vulkan_compiler": {
+    "version": "1.9.2607",
+    "windows_archive_url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2607/dxc_2026_07_29.zip",
+    "windows_archive_sha256": "a1dfb116ba3eeae6a1582291b53a8e7bf65ad760676bd3194685c8f7367cd241",
+    "scope": "Selected native framebuffer and Wave Race reflection/shadow SPIR-V shaders; the ordinary SPIR-V shaders use the matched 1.8.2502 toolchain."
+  }
+}

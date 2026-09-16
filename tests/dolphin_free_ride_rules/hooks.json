@@ -1,0 +1,32 @@
+[
+  {
+    "func": "func_800762D0",
+    "before_vram": "0x800762D0",
+    "text": "{ extern int wr64_free_ride_skip_retirement(const uint8_t*, uint32_t); if (wr64_free_ride_skip_retirement(rdram, (uint32_t)ctx->r4)) return; }"
+  },
+  {
+    "func": "AudioThread_QueueCmdS8",
+    "before_vram": "0x800C53D4",
+    "text": "{ extern int wr64_free_ride_skip_audio(const uint8_t*, uint32_t); if (wr64_free_ride_skip_audio(rdram, (uint32_t)ctx->r4)) return; }"
+  },
+  {
+    "func": "func_i1_802C5DF4",
+    "before_vram": "0x802C5FD0",
+    "text": "{ extern int wr64_free_ride_active(const uint8_t*); if (wr64_free_ride_active(rdram)) goto L_802C63A4; }"
+  },
+  {
+    "func": "func_801F4120",
+    "before_vram": "0x801F42FC",
+    "text": "{ extern int wr64_free_ride_skip_hud(const uint8_t*, uint32_t); if (wr64_free_ride_skip_hud(rdram, 0x801F42FC)) goto L_801F43E4; }"
+  },
+  {
+    "func": "func_801FAEB8",
+    "before_vram": "0x801FAEB8",
+    "text": "{ extern int wr64_free_ride_skip_hud(const uint8_t*, uint32_t); if (wr64_free_ride_skip_hud(rdram, 0x801FAEB8)) return; }"
+  },
+  {
+    "func": "func_801FBFB4",
+    "before_vram": "0x801FBFB4",
+    "text": "{ extern int wr64_free_ride_skip_hud(const uint8_t*, uint32_t); if (wr64_free_ride_skip_hud(rdram, 0x801FBFB4)) return; }"
+  }
+]

@@ -1,0 +1,11 @@
+build/
+temp/
+.vs/
+.vscode/
+
+*.o
+*.elf
+*.z64
+*.n64
+*.v64
+.DS_Store

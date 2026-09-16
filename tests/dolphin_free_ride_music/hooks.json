@@ -1,0 +1,7 @@
+[
+  {
+    "func": "func_800C21F4",
+    "before_vram": "0x800C2AC0",
+    "text": "{ extern void wr64_free_ride_schedule_music(uint8_t*); wr64_free_ride_schedule_music(rdram); }"
+  }
+]
