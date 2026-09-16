@@ -12,7 +12,7 @@ RaceWave46 brings the USA Rev 1 version of Wave Race 64 to modern PCs, with high
 
 The project has been under active development for many months. That time has gone into bringing up the game, revisiting its rendering and interfaces, adding enhancements, and repeatedly testing races, menus, course introductions and the championship ending. The aim is to make this classic more comfortable to play today while preserving its character.
 
-> **Release status:** **v1.0.0** is available for private review. This repository and its release downloads remain private. Public availability awaits the maintainer's approval and resolution of the remaining third-party license question recorded in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+> **v1.0.0 is available now.** [Download for Windows](https://github.com/DomazinUS/RaceWave46/releases/download/v1.0.0/RaceWave46-Windows-x64-v1.0.0.zip) · [Source and release notes](https://github.com/DomazinUS/RaceWave46/releases/tag/v1.0.0).
 
 [The original game](#the-original-game) · [Added features](#what-racewave46-adds) · [Graphics API support](#graphics-api-support) · [Getting started](#getting-started) · [AI assistance](#ai-assistance) · [Source and license](#source-and-license) · [Credits](#credits)
 
@@ -133,7 +133,7 @@ For an update, keep your `.runtime` directory. Compatible texture packs can be i
 
 ## Source and license
 
-**The project's original contributions are licensed under GPL-3.0-only.** Third-party components retain their applicable licenses and notices, including [N64ModernRuntime's GPLv3 license](https://github.com/N64Recomp/N64ModernRuntime/blob/main/COPYING). The source is included in this repository and in the corresponding source ZIP. The Windows and source packages are attached to the **v1.0.0** release for private review; they are not publicly available.
+**The project's original contributions are licensed under GPL-3.0-only.** Third-party components retain their applicable licenses and notices, including [N64ModernRuntime's GPLv3 license](https://github.com/N64Recomp/N64ModernRuntime/blob/main/COPYING). The source is included in this repository and in the corresponding source ZIP. The Windows and corresponding source packages are available from the [**v1.0.0** release](https://github.com/DomazinUS/RaceWave46/releases/tag/v1.0.0).
 
 The source includes the modified dependencies and checked-in generated code needed for the Windows build. See [BUILDING.md](BUILDING.md) for build instructions, [LICENSE](LICENSE) and [COPYING](COPYING) for the project's license, and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for component notices. Building does not require a ROM; playing requires your own supported ROM.
 
@@ -153,6 +153,6 @@ These credits acknowledge the upstream work and writing used by RaceWave46; they
 
 ## Feedback
 
-Once public testing begins, useful reports should include the course and game mode, what happened, how to reproduce it, the release version, GPU and driver, selected graphics API, resolution and relevant enhancement settings. A short video or screenshot is especially helpful for rendering issues. Please do not attach ROMs, account credentials or personal tokens.
+Useful reports should include the course and game mode, what happened, how to reproduce it, the release version, GPU and driver, selected graphics API, resolution and relevant enhancement settings. A short video or screenshot is especially helpful for rendering issues. Please do not attach ROMs, account credentials or personal tokens.
 
 RaceWave46 is an unofficial fan project and is not affiliated with or endorsed by Nintendo.
