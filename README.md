@@ -1,9 +1,3 @@
-<p align="center">
-  <img src="assets/manual/WaveRace64_30th_Anniversary.png" alt="Wave Race 64 — 30th Anniversary Recompilation" width="420" />
-</p>
-
-![RaceWave46 — Back on the water. Wave Race 64, recompiled for modern PCs.](assets/project/racewave46-banner.svg)
-
 # RaceWave46
 
 **A fan-made Windows recompilation of Wave Race 64, celebrating 30 years on the water.**
