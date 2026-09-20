@@ -1,0 +1,3 @@
+submission_frame,rank,projection,call,tri_count,unique_vertices,transform,matrix_id,combiner_l,combiner_h,othermode_l,othermode_h,paired,covered,breaks,deviation,uv_span,pos_delta,tc_delta
+6,0,0,2,6,7,2,57524300,FC11C223,FF87FFFF,00504240,00882C3F,1,9,0,2.1319,0.0619,38.601,83.164
+344,0,1,2,6,7,76,57524301,FC11C223,FF87FFFF,00504240,00882CFF,1,9,0,3877.2930,4172.9263,115.352,2.003

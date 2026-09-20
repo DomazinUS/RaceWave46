@@ -1,0 +1,127 @@
+[
+  {
+    "func": "func_80051538",
+    "before_vram": 2147816760,
+    "text": "{ extern uint32_t wr64_two_player_sun_skip_shared_wash(uint8_t*); if (wr64_two_player_sun_skip_shared_wash(rdram)) { ctx->r2 = ctx->r4; return; } }"
+  },
+  {
+    "func": "func_80051538",
+    "before_vram": 2147817200,
+    "text": "{ extern uint32_t wr64_experimental_viewport_borders(void); if (wr64_experimental_viewport_borders()) { ctx->r13 = 0xE46A03C0U; ctx->r24 = 0x00000000U; } }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148056908,
+    "text": "extern float wr64_sun_wash_edge(int32_t, float, double, uint32_t, uint32_t, int32_t); const int32_t wr64WashCourse = MEM_W(0, ctx->r12); const float wr64WashEdge = wr64_sun_wash_edge(wr64WashCourse, ctx->f0.fl, ctx->f8.d, MEM_W(0, ctx->r13), MEM_W(0xC, ctx->r13), MEM_W(wr64WashCourse * 4, S32(0x800D9944))); if (wr64WashEdge > 0.0f) ctx->f8.d = 0.0;"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148057020,
+    "text": "if (wr64WashEdge > 0.0f && wr64WashEdge < 1.0f) ctx->f10.fl *= wr64WashEdge;"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148057332,
+    "text": "{ extern uint32_t wr64_sun_logical_width_bits(void); ctx->r1 = wr64_sun_logical_width_bits(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148057776,
+    "text": "{ extern uint32_t wr64_sun_logical_width_bits(void); ctx->r1 = wr64_sun_logical_width_bits(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148058184,
+    "text": "{ extern uint32_t wr64_sun_logical_width_bits(void); ctx->r1 = wr64_sun_logical_width_bits(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148058628,
+    "text": "{ extern uint32_t wr64_sun_logical_width_bits(void); ctx->r1 = wr64_sun_logical_width_bits(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148059856,
+    "text": "{ extern uint32_t wr64_sun_logical_width_bits(void); ctx->r1 = wr64_sun_logical_width_bits(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148060296,
+    "text": "{ extern uint32_t wr64_sun_logical_width_bits(void); ctx->r1 = wr64_sun_logical_width_bits(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148060752,
+    "text": "{ extern uint32_t wr64_sun_logical_width_bits(void); ctx->r1 = wr64_sun_logical_width_bits(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148057272,
+    "text": "{ extern int32_t wr64_sun_logical_right_edge(void); ctx->r24 = wr64_sun_logical_right_edge(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148059040,
+    "text": "{ extern int32_t wr64_sun_logical_right_edge(void); ctx->r15 = wr64_sun_logical_right_edge(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148060272,
+    "text": "{ extern int32_t wr64_sun_logical_right_edge(void); ctx->r14 = wr64_sun_logical_right_edge(); }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148057412,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r6) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148057840,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r6) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148058260,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r6) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148058700,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r6) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148059084,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r5) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148059100,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r5) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148059492,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r5) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148059508,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r5) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148059928,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r6) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148060400,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r6) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  },
+  {
+    "func": "func_8008BD2C",
+    "before_vram": 2148060824,
+    "text": "{ extern int32_t wr64_sun_horizontal_cull_limit(void); ctx->r1 = SIGNED(ctx->r6) < wr64_sun_horizontal_cull_limit() ? 1 : 0; }"
+  }
+]

@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.20)
+project(Wr64GraphicsRestartTests LANGUAGES CXX)
+enable_testing()
+get_filename_component(WR64_ROOT "../.." ABSOLUTE BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+add_executable(wr64_graphics_restart_test graphics_restart_test.cpp)
+target_compile_features(wr64_graphics_restart_test PRIVATE cxx_std_20)
+target_compile_definitions(wr64_graphics_restart_test PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+target_include_directories(wr64_graphics_restart_test PRIVATE "${WR64_ROOT}/include"
+    "${WR64_ROOT}/lib/N64ModernRuntime/ultramodern/include" "${WR64_ROOT}/lib/N64ModernRuntime/thirdparty")
+if(WIN32)
+    target_link_libraries(wr64_graphics_restart_test PRIVATE shell32)
+endif()
+add_test(NAME graphics_api_restart_contract COMMAND wr64_graphics_restart_test)

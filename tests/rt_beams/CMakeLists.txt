@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.20)
+project(Wr64RTBeamTests LANGUAGES CXX)
+enable_testing()
+add_executable(wr64_rt_beam_identity beam_identity_test.cpp)
+target_compile_features(wr64_rt_beam_identity PRIVATE cxx_std_17)
+target_include_directories(wr64_rt_beam_identity PRIVATE ../../lib/rt64/src)
+add_test(NAME native_twilight_beam_identity COMMAND wr64_rt_beam_identity)

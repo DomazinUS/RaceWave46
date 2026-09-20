@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(Wr64DolphinFreeRideVisualTests LANGUAGES CXX)
+enable_testing()
+get_filename_component(WR64_ROOT "../.." ABSOLUTE BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+add_executable(dolphin_visual_scope_test scope_test.cpp)
+target_compile_features(dolphin_visual_scope_test PRIVATE cxx_std_20)
+target_include_directories(dolphin_visual_scope_test PRIVATE "${WR64_ROOT}/lib/rt64/src")
+add_test(NAME dolphin_loaded_visual_scope COMMAND dolphin_visual_scope_test)

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "rom_sha256": "f35d2423ebcb86eaf86fa935b613c7532b123a7bc50fb74996984c3b02fc3999",
+  "patched_rom_sha256": "acad4ea5b0fa811e6a4a99fdfc424da70661d5f25eb53af52e7108e7a6a6ce50",
+  "inputs": {
+    "config/us.rev1.toml": "845db86310df7875295a5ee216084fda01bdd6f3dc5eba0328e3bfd33a4e21c2",
+    "config/aspMain.us.rev1.toml": "e9195dcb6125142733fb62b856b281790ad16633a3d262aedfc9e24d25d0ceb4",
+    "symbols/waverace64.us.rev1.toml": "9c1f4d513448cf32deed526908024084816f3b463b7209426a27d670f0fc02ba",
+    "data/waverace64-widescreen.ips": "22b17f9012eef6036d9d5838539700fe46cb193867dd3baf591961b436c7a323",
+    "tools/finalize_generated.py": "eaa9d09dd2baf30f4b8c66d2edcc33525443724c4f1afb9de7ffe9d40a78f650",
+    "tools/patch_rsp_dispatch.cmake": "a580c1ae344f7bbafc69136afb5bd1fceecc279e8abfc8b713bc7b9a1aa1884d"
+  },
+  "outputs": {
+    "RecompiledFuncsPoint0/funcs.h": "e045f4ec9368bee6d3b582db77c6c1c50d3e1070caf9f6a6aa69943ccffa9eca",
+    "RecompiledFuncsPoint0/funcs_0.c": "3a279f5dd707bbaf563c1abd61f9070989543484274262ee14cbf6ba52810d7a",
+    "RecompiledFuncsPoint0/funcs_1.c": "9cb863db0793bf045279e055130b81f26a8d946c307b3de98da87ef78677a7fd",
+    "RecompiledFuncsPoint0/funcs_10.c": "56efe3b4f5cf56124155366a3a7a57cbe7121029ac9834223fb54cbf325699c5",
+    "RecompiledFuncsPoint0/funcs_11.c": "16da744acc9664063301ce0147389811f9197c2a02ed95cb22093544ebee1a41",
+    "RecompiledFuncsPoint0/funcs_12.c": "d9bf0a3ec247f871f96184509872e2494079101152009d346d955ef420e533d2",
+    "RecompiledFuncsPoint0/funcs_13.c": "0525444cfbadaa88a528d036c986dfd0a81dad897029e1f95951714f13a72f63",
+    "RecompiledFuncsPoint0/funcs_14.c": "4d3eeeb2200d9e8a7d74539933b56dcee4547bd435568ec09aa74ec90ad9c508",
+    "RecompiledFuncsPoint0/funcs_15.c": "1a7f5d017d4d77ffe7d7cfa82b5f1e8be201073ae11612d480b21ab0b36954d6",
+    "RecompiledFuncsPoint0/funcs_16.c": "00ec890908f6e5f6d22ee504e2b42435e7022ec24e84d0a4255015f1794831d8",
+    "RecompiledFuncsPoint0/funcs_17.c": "35eafe7f503696a63b4fecdab272fa48ff3dfc41c83d823ae35b370824784cd3",
+    "RecompiledFuncsPoint0/funcs_18.c": "79a3109e07e2cecb823a03c542aa713ff3dea4a1f13ec7557be71e0b16fd325b",
+    "RecompiledFuncsPoint0/funcs_19.c": "6592f22c99b2f168715235087105249026fbcfedf229f7a55a29d6a1fe7ee3b6",
+    "RecompiledFuncsPoint0/funcs_2.c": "c20ab5f5f668117bd1cb70d57dfe59c601b5afb6a2773a890208e46c317b96c1",
+    "RecompiledFuncsPoint0/funcs_20.c": "00ea22e21b98df9ffef012b38837f7be7233c28269b896f411d0f09c9adaaeeb",
+    "RecompiledFuncsPoint0/funcs_21.c": "f041406374f7803e653bc862594125459b216f054c260f463f191c07feaef0f2",
+    "RecompiledFuncsPoint0/funcs_22.c": "0ddd36b8f19ff07877183e08ab99e44969e798b1d28f472fe0ae55e8f14ce6c0",
+    "RecompiledFuncsPoint0/funcs_23.c": "7ce8006ced86b7928e09d59a259338f8a3fe6e1e73da49ff4110cf50a5d324af",
+    "RecompiledFuncsPoint0/funcs_3.c": "d51b53abd6703fcb40d11deb760fed9b2a619772f2cd4fcf1c7bdec583e5717a",
+    "RecompiledFuncsPoint0/funcs_4.c": "665cfcfcfe42541e12ceb8eb7f0ad28f6b295ce532980c6f3bfafe7d9e2dc1ef",
+    "RecompiledFuncsPoint0/funcs_5.c": "4f27067d182fd0b90ee991c38bea01fb13fa9c00052b6f1163031cc84b77c53e",
+    "RecompiledFuncsPoint0/funcs_6.c": "9b90ff42dcaee6aa4d323828474fc6e7d88238cedf18fc268d316e05edc73f81",
+    "RecompiledFuncsPoint0/funcs_7.c": "7221adcdfa7d72c839728c0af584a12d110c9a8271bc54d5822247458288d0d0",
+    "RecompiledFuncsPoint0/funcs_8.c": "e34abd799044df13394bdc89eb08525b7a5c8d929b1afcfb8ac87b69c0dbb016",
+    "RecompiledFuncsPoint0/funcs_9.c": "3b3527b3f5d992d85352fe100dc36cdd9da3a921c93e7c5ce1f813e1d81ee90e",
+    "RecompiledFuncsPoint0/lookup.cpp": "f62ac53db122991f0cbd55136d970559102974e91c6d4bbe72b62740a75802e1",
+    "RecompiledFuncsPoint0/recomp_overlays.inl": "e570330b7f289073cfecaf2deffe2eecf52390eee59d3bd432c932b1decda812",
+    "rsp/aspMain.cpp": "57034e3590bd29f0eac1cd63ed0220cb96d71152227311271998c821d4581a51"
+  }
+}

@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.20)
+project(Wr64AudioVolumeTests LANGUAGES CXX)
+enable_testing()
+add_executable(wr64_audio_volume_test audio_volume_test.cpp)
+target_compile_features(wr64_audio_volume_test PRIVATE cxx_std_17)
+target_include_directories(wr64_audio_volume_test PRIVATE "${CMAKE_CURRENT_LIST_DIR}/../../include")
+add_test(NAME audio_output_volume COMMAND wr64_audio_volume_test)

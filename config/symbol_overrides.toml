@@ -1,0 +1,36 @@
+
+[[function]]
+section = "codeseg"
+name = "Math_FloatRand"
+vram = 0x801ED338
+size = 0x50
+
+[[function]]
+section = "main_segment"
+name = "SysAudio_AudioThreadEntry"
+vram = 0x80047B20
+size = 0xC0
+
+[[function_span]]
+section = "main_segment"
+vram = 0x80047B00
+size = 0x20
+
+[[function_span]]
+section = "main_segment"
+vram = 0x800BD138
+size = 0xAB4
+
+[[function_span]]
+section = "main_segment"
+vram = 0x800CAB60
+size = 0x630
+
+[[function_remove]]
+section = "main_segment"
+vram = 0x8006B33C
+
+[[function_span]]
+section = "main_segment"
+vram = 0x8006B334
+size = 0xB40

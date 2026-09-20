@@ -1,0 +1,27 @@
+# Data symbols referenced by recomp patches. Entries without a ROM address are
+# absolute and therefore remain valid across overlay section registration.
+
+[[section]]
+name = "absolute_patch_symbols"
+vram = 0x00000000
+size = 0xFFFFFFFF
+
+symbols = [
+    { name = "gDisplayListHead", vram = 0x80151944 },
+    { name = "gGfxPool", vram = 0x801518B8 },
+    { name = "sGfxTask", vram = 0x80151940 },
+    { name = "D_8011F8E0", vram = 0x8011F8E0 },
+    { name = "D_8011F8E8", vram = 0x8011F8E8 },
+    { name = "D_801518C0", vram = 0x801518C0 },
+    { name = "gPlayers", vram = 0x800DAB28 },
+    { name = "gCourseID", vram = 0x800D8170 },
+    { name = "D_800D48DC", vram = 0x800D48DC },
+    { name = "D_801CE638", vram = 0x801CE638 },
+    { name = "gRiders", vram = 0x801982F0 },
+    { name = "gCameraPerspective", vram = 0x80227C80 },
+    { name = "D_80223930", vram = 0x80223930 },
+    { name = "D_80192690", vram = 0x80192690 },
+    { name = "D_800DAB2C", vram = 0x800DAB2C },
+    { name = "gGameState", vram = 0x800DAB24 },
+    { name = "D_80228AA4", vram = 0x80228AA4 },
+]

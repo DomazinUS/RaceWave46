@@ -1,0 +1,32 @@
+[
+  {
+    "func": "func_8008D94C",
+    "before_vram": 2148063564,
+    "text": "uint32_t wr64DpSunToken = 0; uint64_t wr64DpSunSavedY = 0; int wr64DpSunBypass = 0; int wr64DpSunPacket = 0;"
+  },
+  {
+    "func": "func_8008D94C",
+    "before_vram": 2148063608,
+    "text": "{ extern uint32_t wr64_dolphin_sun_begin(uint8_t*, float, float); wr64DpSunToken = wr64_dolphin_sun_begin(rdram, ctx->f8.fl, ctx->f4.fl); }"
+  },
+  {
+    "func": "func_8008D94C",
+    "before_vram": 2148064624,
+    "text": "if (wr64DpSunToken != 0 && SIGNED(ctx->r11) < 0) { wr64DpSunSavedY = ctx->r11; wr64DpSunBypass = 1; ctx->r11 = 0; }"
+  },
+  {
+    "func": "func_8008D94C",
+    "before_vram": 2148064632,
+    "text": "if (wr64DpSunBypass) { ctx->r11 = wr64DpSunSavedY; }"
+  },
+  {
+    "func": "func_8008D94C",
+    "before_vram": 2148065216,
+    "text": "wr64DpSunPacket = 1;"
+  },
+  {
+    "func": "func_8008D94C",
+    "before_vram": 2148065220,
+    "text": "if (wr64DpSunToken != 0 && wr64DpSunPacket) { extern void wr64_dolphin_sun_packet(uint8_t*, uint32_t, uint32_t); wr64_dolphin_sun_packet(rdram, wr64DpSunToken, (uint32_t)ctx->r8); }"
+  }
+]
