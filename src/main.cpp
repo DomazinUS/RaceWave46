@@ -163,6 +163,87 @@ const char* validation_error_name(recomp::RomValidationError error) {
     return "unknown error";
 }
 
+recomp::GameEntry register_game_entry() {
+    recomp::GameEntry game{
+        .rom_hash = kRomXxh3,
+        .internal_name = "WAVE RACE 64",
+        // REQUIRED. recomp::register_game hard-exits on an empty
+        // display_name - librecomp/src/recomp.cpp:77. This is the
+        // human-facing game name the frontend will show later; the
+        // project's own identity belongs in the window title and the UI,
+        // not here.
+        .display_name = "Wave Race 64",
+        .game_id = std::u8string{kGameId},
+        .mod_game_id = "waverace64",
+        .save_type = recomp::SaveType::Eep4k,
+        .is_enabled = true,
+        .has_compressed_code = false,
+        .entrypoint_address = get_entrypoint_address(),
+        .entrypoint = recomp_entrypoint,
+        .on_init_callback = [](uint8_t*, recomp_context*) {
+            wr64::achievements::native::game_initialized(recomp::get_rom());
+        },
+    };
+
+    recomp::register_game(game);
+    // A player owns the cartridge image, not the widescreen ROM this port was
+    // recompiled from. Both are accepted: the cartridge image is patched in
+    // memory here, the already-patched ROM passes the hash check untouched.
+    recomp::register_rom_patcher(wr64::rom_patch::apply_if_unpatched);
+    return game;
+}
+
+const char* validation_status_token(recomp::RomValidationError error) {
+    switch (error) {
+        case recomp::RomValidationError::Good: return "good";
+        case recomp::RomValidationError::FailedToOpen: return "failed-to-open";
+        case recomp::RomValidationError::NotARom: return "not-a-rom";
+        case recomp::RomValidationError::IncorrectRom: return "incorrect-rom";
+        case recomp::RomValidationError::NotYet: return "not-yet";
+        case recomp::RomValidationError::IncorrectVersion: return "incorrect-version";
+        case recomp::RomValidationError::OtherError: return "other-error";
+    }
+    return "other-error";
+}
+
+// --check-rom and --import-rom let an external setup tool (the Linux
+// launcher) use the same validation, byte-order normalisation and widescreen
+// patching as the in-game "Select USA ROM" option. Each prints exactly one
+// status line on stdout and exits with 0 only when a valid ROM is stored.
+int run_rom_setup(const wr64::editions::Options& options) {
+    std::error_code directory_error;
+    std::filesystem::create_directories(options.runtime, directory_error);
+    if (directory_error) {
+        std::fprintf(stderr, "[rom] cannot create %s: %s\n",
+            options.runtime.string().c_str(), directory_error.message().c_str());
+        std::printf("status=other-error\n");
+        return EXIT_FAILURE;
+    }
+    recomp::register_config_path(options.runtime);
+    register_game_entry();
+    std::u8string game_id{kGameId};
+
+    if (options.check_rom) {
+        const bool valid = recomp::validate_stored_rom(game_id);
+        std::printf("status=%s\n", valid ? "valid" : "missing");
+        return valid ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
+    std::error_code size_error;
+    const auto rom_size = std::filesystem::file_size(options.import_rom, size_error);
+    recomp::RomValidationError result = recomp::RomValidationError::FailedToOpen;
+    if (!size_error) {
+        result = rom_size > 64 * 1024 * 1024
+            ? recomp::RomValidationError::NotARom
+            : recomp::select_rom(options.import_rom, game_id);
+    }
+    if (result != recomp::RomValidationError::Good) {
+        std::fprintf(stderr, "[rom] import failed: %s\n", validation_error_name(result));
+    }
+    std::printf("status=%s\n", validation_status_token(result));
+    return result == recomp::RomValidationError::Good ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -194,6 +275,9 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "[launch] %s\n", error.what());
         return EXIT_FAILURE;
     }
+    if (options.check_rom || !options.import_rom.empty()) {
+        return run_rom_setup(options);
+    }
     const std::filesystem::path rom_path = options.rom.empty()
         ? options.runtime / (std::u8string{kGameId} + u8".z64") : options.rom;
 #ifdef WR64_ENABLE_RT64
@@ -222,32 +306,7 @@ int main(int argc, char** argv) {
     wr64::achievements::initialize(recomp::get_config_path());
     wr64::achievement_badges::initialize(recomp::get_config_path());
 
-    recomp::GameEntry game{
-        .rom_hash = kRomXxh3,
-        .internal_name = "WAVE RACE 64",
-        // REQUIRED. recomp::register_game hard-exits on an empty
-        // display_name - librecomp/src/recomp.cpp:77. This is the
-        // human-facing game name the frontend will show later; the
-        // project's own identity belongs in the window title and the UI,
-        // not here.
-        .display_name = "Wave Race 64",
-        .game_id = std::u8string{kGameId},
-        .mod_game_id = "waverace64",
-        .save_type = recomp::SaveType::Eep4k,
-        .is_enabled = true,
-        .has_compressed_code = false,
-        .entrypoint_address = get_entrypoint_address(),
-        .entrypoint = recomp_entrypoint,
-        .on_init_callback = [](uint8_t*, recomp_context*) {
-            wr64::achievements::native::game_initialized(recomp::get_rom());
-        },
-    };
-
-    recomp::register_game(game);
-    // A player owns the cartridge image, not the widescreen ROM this port was
-    // recompiled from. Both are accepted: the cartridge image is patched in
-    // memory here, the already-patched ROM passes the hash check untouched.
-    recomp::register_rom_patcher(wr64::rom_patch::apply_if_unpatched);
+    const recomp::GameEntry game = register_game_entry();
     // recompui's launcher reads this, and indexes element zero without
     // checking. A no-op when the frontend is not compiled in.
     wr64::frontend::register_game(game);

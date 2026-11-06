@@ -1,6 +1,7 @@
 #include "wr64_editions.hpp"
 
 #include <charconv>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -48,9 +49,29 @@ Options parse_process_options(int argc, char** argv) {
     // A direct EXE launch and a shortcut must use the same portable profile,
     // regardless of the caller's working directory. Explicit CLI paths still
     // resolve from that directory, so existing diagnostic launches retain it.
-    return parse_options(count, arguments.data(), executable_path().parent_path() / ".runtime");
+    return parse_options(count, arguments.data(), default_runtime_directory());
 #else
-    return parse_options(argc, argv);
+    return parse_options(argc, argv, default_runtime_directory());
+#endif
+}
+
+std::filesystem::path default_runtime_directory() {
+#ifdef _WIN32
+    return executable_path().parent_path() / ".runtime";
+#elif defined(__linux__)
+    // Inside Flatpak XDG_DATA_HOME is the application's private data
+    // directory (~/.var/app/<id>/data).
+    const char* data_home = std::getenv("XDG_DATA_HOME");
+    if (data_home != nullptr && data_home[0] == '/') {
+        return std::filesystem::u8path(data_home) / "racewave46";
+    }
+    const char* home = std::getenv("HOME");
+    if (home != nullptr && home[0] == '/') {
+        return std::filesystem::u8path(home) / ".local" / "share" / "racewave46";
+    }
+    return {};
+#else
+    return {};
 #endif
 }
 
@@ -69,6 +90,8 @@ Options parse_options(int argc, char** argv, const std::filesystem::path& defaul
         else if (item == "--runtime-dir") result.runtime = std::filesystem::absolute(std::filesystem::u8path(argument(i)));
         else if (item == "--rom") result.rom = std::filesystem::u8path(argument(i));
         else if (item == "--windowed") result.windowed = true;
+        else if (item == "--check-rom") { result.check_rom = true; result.launcher = false; }
+        else if (item == "--import-rom") { result.import_rom = std::filesystem::u8path(argument(i)); result.launcher = false; }
         else if (item == "--seconds") {
             const auto value = argument(i);
             const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result.seconds);
@@ -88,6 +111,10 @@ Options parse_options(int argc, char** argv, const std::filesystem::path& defaul
         else throw std::runtime_error("Unknown option: " + item);
     }
     if (result.seconds > 0) { result.launch = true; result.launcher = false; }
+    if (result.check_rom && !result.import_rom.empty())
+        throw std::runtime_error("--check-rom and --import-rom cannot be combined.");
+    if ((result.check_rom || !result.import_rom.empty()) && (result.launch || !result.rom.empty()))
+        throw std::runtime_error("ROM setup options cannot be combined with a game launch.");
     return result;
 }
 
