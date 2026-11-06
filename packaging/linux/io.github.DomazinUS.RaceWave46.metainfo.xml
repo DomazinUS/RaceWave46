@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.DomazinUS.RaceWave46</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>RaceWave46</name>
+  <summary>Wave Race 64 recompiled for modern systems</summary>
+  <developer id="io.github.domazinus">
+    <name>RaceWave46 contributors</name>
+  </developer>
+  <description>
+    <p>
+      RaceWave46 is an unofficial, AI-assisted static recompilation of Wave Race 64, with modern
+      rendering, widescreen presentation, expanded local multiplayer, configurable controls and
+      RetroAchievements.
+    </p>
+    <p>
+      No game data is included. On first start you select your own unmodified Wave Race 64 USA
+      Rev 1 ROM; it is checked and copied into the application's private data, and later starts
+      go straight to the game.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.DomazinUS.RaceWave46.desktop</launchable>
+  <url type="homepage">https://github.com/DomazinUS/RaceWave46</url>
+  <url type="bugtracker">https://github.com/DomazinUS/RaceWave46/issues</url>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-info">mild</content_attribute>
+  </content_rating>
+  <supports>
+    <control>keyboard</control>
+    <control>gamepad</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <categories>
+    <category>Game</category>
+    <category>ActionGame</category>
+  </categories>
+  <releases>
+    <release version="1.0.0" date="2026-09-16">
+      <description>
+        <p>First public release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

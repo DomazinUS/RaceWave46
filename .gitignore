@@ -4,6 +4,11 @@
 /b-*/
 /out/
 /dist/
+/packaging/linux/launcher/target/
+
+# Flatpak builder state and the build-time ROM copy
+/.flatpak-builder/
+/.flatpak-input/
 
 # Runtime state written next to the executable (settings, saves, ROM copy)
 .runtime/
