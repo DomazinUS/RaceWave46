@@ -3,6 +3,7 @@ runtime: org.freedesktop.Platform
 runtime-version: '26.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
   - org.freedesktop.Sdk.Extension.llvm22
 command: racewave46
 
@@ -25,12 +26,32 @@ finish-args:
   # open through the OpenURI portal.
 
 build-options:
-  append-path: /usr/lib/sdk/llvm22/bin
+  append-path: /usr/lib/sdk/llvm22/bin:/usr/lib/sdk/rust-stable/bin
   env:
     CC: clang
     CXX: clang++
 
 modules:
+  # librashader, loaded by the game from its own directory for the librashader
+  # enhancement. Only the Vulkan runtime is built; see tools/build_librashader.sh.
+  - name: librashader
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/librashader/cargo
+        CARGO_NET_OFFLINE: 'true'
+    build-commands:
+      - cargo --offline build --locked --package librashader-capi --profile optimized
+          --no-default-features --features runtime-vulkan
+      - install -Dm755 target/optimized/liblibrashader_capi.so /app/lib/racewave46/librashader.so
+      - install -Dm644 LICENSE.md /app/share/licenses/io.github.DomazinUS.RaceWave46/librashader-LICENSE.md
+    sources:
+      - type: archive
+        url: https://github.com/SnowflakePowered/librashader/archive/refs/tags/librashader-v0.12.0.tar.gz
+        sha256: 4bf8cf2489d00848dcabbf2163204093776082da4217d5a5db45e4cbf335cedf
+      # Generated from the archive's Cargo.lock with flatpak-cargo-generator.
+      - librashader-cargo-sources.json
+
   - name: racewave46
     buildsystem: simple
     build-commands:
@@ -38,6 +59,7 @@ modules:
       # the release checksums and builds the game. The ROM is deleted afterwards.
       - ./BUILD-USA.sh --rom rom.z64 --jobs "${FLATPAK_BUILDER_N_JOBS}"
           --dxc-dir "${PWD}/dxc-1.8.2502/bin" --vulkan-dxc "${PWD}/dxc-1.9.2607/bin/dxc"
+          --librashader /app/lib/racewave46/librashader.so
       - rm -f rom.z64
       - install -Dm755 build/WaveRace64Recompiled -t /app/lib/racewave46
       - cp -r build/assets /app/lib/racewave46/assets

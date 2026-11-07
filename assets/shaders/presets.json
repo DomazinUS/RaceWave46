@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "https://github.com/libretro/slang-shaders",
+    "revision": "3685eda59ffd2ebe1b12cc4640581dc23552ce88"
+  },
+  "presets": [
+    {
+      "id": "crt-geom",
+      "name": "CRT Geom",
+      "path": "slang/crt/crt-geom.slangp",
+      "input": "native",
+      "license": "GPL-2.0-or-later",
+      "description": "Classic curved CRT with scanlines, an aperture-grille mask and rounded corners."
+    },
+    {
+      "id": "crt-lottes",
+      "name": "CRT Lottes",
+      "path": "slang/crt/crt-lottes.slangp",
+      "input": "native",
+      "license": "LicenseRef-Public-Domain",
+      "description": "Timothy Lottes' CRT with soft scanlines, a shadow mask, bloom and slight curvature."
+    },
+    {
+      "id": "crt-pi",
+      "name": "CRT Pi",
+      "path": "slang/crt/crt-pi.slangp",
+      "input": "native",
+      "license": "GPL-2.0-or-later",
+      "description": "Lightweight flat CRT with scanlines and a subtle mask. Fast on any GPU."
+    },
+    {
+      "id": "zfast-crt",
+      "name": "zfast CRT",
+      "path": "slang/crt/zfast-crt.slangp",
+      "input": "native",
+      "license": "GPL-2.0-or-later",
+      "description": "Very fast CRT scanlines with a fine mask."
+    },
+    {
+      "id": "crt-guest-advanced",
+      "name": "CRT Guest Advanced",
+      "path": "slang/crt/crt-guest-advanced.slangp",
+      "input": "native",
+      "license": "GPL-2.0-or-later",
+      "description": "Detailed CRT simulation with phosphor afterglow, bloom, halation and masks. The most demanding preset in this list; its first compile takes a few seconds."
+    },
+    {
+      "id": "smaa",
+      "name": "SMAA",
+      "path": "slang/anti-aliasing/smaa.slangp",
+      "input": "internal",
+      "license": "MIT",
+      "description": "Subpixel morphological anti-aliasing that smooths remaining jagged edges."
+    },
+    {
+      "id": "fsr",
+      "name": "AMD FSR 1.0",
+      "path": "slang/edge-smoothing/fsr/fsr.slangp",
+      "input": "internal",
+      "license": "MIT",
+      "description": "AMD FidelityFX Super Resolution 1.0. Sharpens the internal image; with Native N64 input it upscales the 240-line image to the window."
+    },
+    {
+      "id": "adaptive-sharpen",
+      "name": "Adaptive Sharpen",
+      "path": "slang/sharpen/adaptive-sharpen.slangp",
+      "input": "internal",
+      "license": "BSD-2-Clause",
+      "description": "Contrast-aware sharpening that avoids halos around edges."
+    },
+    {
+      "id": "scalefx",
+      "name": "ScaleFX",
+      "path": "slang/edge-smoothing/scalefx/scalefx.slangp",
+      "input": "native",
+      "license": "MIT",
+      "description": "Pixel-art edge smoothing that rounds diagonal stair steps in the native image."
+    },
+    {
+      "id": "vivid-colours",
+      "name": "Vivid Colours",
+      "path": "racewave46/vivid-colours.slangp",
+      "input": "internal",
+      "license": "GPL-3.0-only AND LicenseRef-Public-Domain",
+      "description": "Richer colours with slightly more contrast, using the public-domain image-adjustment shader."
+    }
+  ]
+}

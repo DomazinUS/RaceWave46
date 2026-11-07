@@ -59,6 +59,7 @@ namespace recompui {
         Style disabled_style;
         Style hover_disabled_style;
         std::list<std::function<void(SelectOption& option, int option_index)>> change_callbacks;
+        std::function<void(bool)> focus_callback;
 
         // Element overrides.
         virtual void process_event(const Event &e) override;
@@ -71,6 +72,7 @@ namespace recompui {
             std::string selected_option_value = ""
         );
         void add_change_callback(std::function<void(SelectOption& option, int option_index)> callback);
+        void set_focus_callback(std::function<void(bool)> callback);
         Style* get_hover_style() { return &hover_style; }
         Style* get_focus_style() { return &focus_style; }
         Style* get_disabled_style() { return &disabled_style; }

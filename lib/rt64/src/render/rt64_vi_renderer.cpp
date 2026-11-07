@@ -114,17 +114,17 @@ namespace RT64 {
         RenderViewport viewport;
         RenderRect scissor;
         if (p.outputRegion.enabled) {
-            const auto fit = wr64PresentRegionViewport(p.outputRegion, p.swapChain->getWidth(), p.swapChain->getHeight());
+            const auto fit = wr64PresentRegionViewport(p.outputRegion, p.outputWidth(), p.outputHeight());
             viewport = RenderViewport(fit.x, fit.y, fit.width, fit.height);
             scissor = RenderRect(int32_t(std::floor(fit.x)), int32_t(std::floor(fit.y)),
                 int32_t(std::ceil(fit.x + fit.width)), int32_t(std::ceil(fit.y + fit.height)));
         }
         else {
-            getViewportAndScissor(p.swapChain, *p.vi, p.presentationResolutionScale, p.downsamplingScale, p.removeBlackBorders, viewport, scissor);
+            getViewportAndScissor(p.outputWidth(), p.outputHeight(), *p.vi, p.presentationResolutionScale, p.downsamplingScale, p.removeBlackBorders, viewport, scissor);
         }
         if (!p.outputRegion.enabled && presentationCropValid) {
-            const uint32_t swapWidth = p.swapChain->getWidth();
-            const uint32_t swapHeight = p.swapChain->getHeight();
+            const uint32_t swapWidth = p.outputWidth();
+            const uint32_t swapHeight = p.outputHeight();
             viewport = RenderViewport(0.0f, 0.0f, float(swapWidth), float(swapHeight));
             scissor = RenderRect(0, 0, swapWidth, swapHeight);
         }
@@ -136,8 +136,8 @@ namespace RT64 {
             static RenderViewport previousViewport{};
             static RenderRect previousScissor{};
             static bool firstTrace = true;
-            const uint32_t swapWidth = p.swapChain->getWidth();
-            const uint32_t swapHeight = p.swapChain->getHeight();
+            const uint32_t swapWidth = p.outputWidth();
+            const uint32_t swapHeight = p.outputHeight();
             if (firstTrace || (swapWidth != previousSwapWidth) || (swapHeight != previousSwapHeight) ||
                 (viewport != previousViewport) || (scissor != previousScissor)) {
                 const hlslpp::float2 fbSize = p.vi->fbSize();
@@ -204,6 +204,10 @@ namespace RT64 {
     }
 
     void VIRenderer::getViewportAndScissor(const RenderSwapChain *swapChain, const VI &vi, hlslpp::float2 resolutionScale, uint32_t downsamplingScale, bool removeBlackBorders, RenderViewport &viewport, RenderRect &scissor) {
+        getViewportAndScissor(swapChain->getWidth(), swapChain->getHeight(), vi, resolutionScale, downsamplingScale, removeBlackBorders, viewport, scissor);
+    }
+
+    void VIRenderer::getViewportAndScissor(uint32_t windowWidth, uint32_t windowHeight, const VI &vi, hlslpp::float2 resolutionScale, uint32_t downsamplingScale, bool removeBlackBorders, RenderViewport &viewport, RenderRect &scissor) {
         // We define three different coordinate spaces to work with to translate the VI parameters into the Window.
         //
         // VideoSD: This corresponds to the SD TV Scanline space, which is what the VI natively works on.
@@ -219,7 +223,7 @@ namespace RT64 {
         // specified by the VI.
         const hlslpp::float2 sdSize = removeBlackBorders ? hlslpp::float2(vi.fbSize()) : hlslpp::float2(320.0f, 240.0f);
         const hlslpp::float2 hdSize = computeHDSize(sdSize, resolutionScale, downsamplingScale);
-        const hlslpp::float2 windowSize = { float(swapChain->getWidth()), float(swapChain->getHeight()) };
+        const hlslpp::float2 windowSize = { float(windowWidth), float(windowHeight) };
 
         // Query the VI for the current rendering area.
         hlslpp::float4 viViewRect = vi.viewRectangle() * sdSize.xyxy;

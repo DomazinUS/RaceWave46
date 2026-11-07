@@ -7,12 +7,16 @@
 #include "common/rt64_profiling_timer.h"
 #include "gui/rt64_inspector.h"
 #include "render/rt64_vi_renderer.h"
+#include "render/rt64_wr64_librashader.h"
 
 #include "rt64_application_window.h"
 #include "rt64_present.h"
 #include "rt64_shared_queue_resources.h"
 
 #define PRESENT_QUEUE_SIZE 4
+
+// Height of the librashader input in its native mode: the N64's 240 visible lines.
+constexpr uint32_t Wr64NativeShaderHeight = 240;
 
 namespace RT64 {
     struct WorkloadQueue;
@@ -63,6 +67,9 @@ namespace RT64 {
         bool secondarySwapChainValid = false;
         bool secondaryRetryBlocked = false;
         std::unique_ptr<Inspector> inspector;
+        // Optional RetroArch shader chains for the primary and secondary windows.
+        Wr64LibrashaderOutput librashaderOutput;
+        Wr64LibrashaderOutput secondaryLibrashaderOutput;
         ProfilingTimer presentProfiler = ProfilingTimer(120);
         Timestamp presentTimestamp;
         VIHistory viHistory;

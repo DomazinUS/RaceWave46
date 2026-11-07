@@ -9,6 +9,8 @@ param(
     [ValidateRange(1, 64)][int]$Jobs = 8,
     [string]$VulkanDxc = '',
     [string]$DirectXDxcDirectory = '',
+    [string]$Librashader = '',
+    [switch]$NoLibrashader,
     [switch]$ConfigureOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -33,6 +35,13 @@ if ($VulkanDxc) {
 if ($DirectXDxcDirectory) {
     $DirectXDxcDirectory = (Resolve-Path -LiteralPath $DirectXDxcDirectory -ErrorAction Stop).Path
     $arguments += "-DWR64_DXC_TOOLCHAIN_DIRECTORY=$DirectXDxcDirectory"
+}
+if ($NoLibrashader) {
+    $arguments += '-DWR64_BUNDLE_LIBRASHADER=OFF'
+} else {
+    # Without -Librashader, CMake downloads the pinned librashader.dll.
+    if ($Librashader) { $Librashader = (Resolve-Path -LiteralPath $Librashader -ErrorAction Stop).Path }
+    $arguments += '-DWR64_BUNDLE_LIBRASHADER=ON', "-DWR64_LIBRASHADER_LIBRARY=$Librashader"
 }
 & cmake.exe @arguments
 if ($LASTEXITCODE -ne 0) { throw 'Release configuration failed.' }

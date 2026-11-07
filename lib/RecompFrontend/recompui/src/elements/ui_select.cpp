@@ -250,6 +250,9 @@ namespace recompui {
             bool focus_active = std::get<EventFocus>(e.variant).active;
             set_style_enabled(focus_state, focus_active);
             wrapper->set_style_enabled(focus_state, focus_active);
+            if (focus_callback) {
+                focus_callback(focus_active);
+            }
             break;
         }
         case EventType::Text:
@@ -299,6 +302,10 @@ namespace recompui {
 
     void Select::add_change_callback(std::function<void(SelectOption& option, int option_index)> callback) {
         change_callbacks.emplace_back(callback);
+    }
+
+    void Select::set_focus_callback(std::function<void(bool)> callback) {
+        focus_callback = callback;
     }
 
     void Select::add_option_elements() {

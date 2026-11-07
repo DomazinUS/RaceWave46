@@ -43,6 +43,7 @@ The eight race courses are Sunny Beach, Sunset Bay, Drake Lake, Marine Fortress,
 | **HUD & Menu Filtering** | Original, Light and Enhanced filtering for supported original game text and HUD textures. |
 | **Field of View** | Up to 10 extra degrees for the chase camera in one-player and two-player races. |
 | **Wave Roundness** | Adjustable rounding of rendered waves, with 50% as the default. |
+| **librashader** | RetroArch shader presets applied to the game image through [librashader](https://github.com/SnowflakePowered/librashader): CRT Geom, CRT Lottes, CRT Pi, zfast CRT, CRT Guest Advanced, SMAA, AMD FSR 1.0, Adaptive Sharpen, ScaleFX and Vivid Colours. **librashader Input** passes the image at window resolution (Internal) or at the console's 240 lines (Native N64) for CRT and pixel-art presets. Menus and the settings overlay are not filtered. Off by default. |
 | **Window modes** | Fullscreen startup, windowed play and fullscreen toggling with F11 or Alt+Enter. |
 
 ### Water, sky, shadows and visibility
@@ -70,6 +71,7 @@ The eight race courses are Sunny Beach, Sunset Bay, Drake Lake, Marine Fortress,
 | Separate player windows | Supported | Unavailable |
 | Horizontal and vertical split screen, enhanced two-player detail and Dolphin Park Free Ride | Supported | Supported |
 | Widescreen, frame interpolation, HUD filtering, Wave Roundness, draw-distance controls and extended cloud coverage | Shared implementation | Shared implementation |
+| librashader shader presets, including separate player windows where available | Supported | Supported |
 
 The settings screen disables unavailable choices and explains their requirements. Availability follows the active renderer, including when Graphics API is set to Auto. Ray Traced options require **DXR 1.1 / Shader Model 6.5** support; Ray Traced shadows also require Ray Traced Water Reflections. MSAA depends on the device's supported sample counts and sample-position capabilities.
 

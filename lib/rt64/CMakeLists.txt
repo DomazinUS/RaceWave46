@@ -425,6 +425,7 @@ set (SOURCES
     "${PROJECT_SOURCE_DIR}/src/render/rt64_vertex_processor.cpp"
     "${PROJECT_SOURCE_DIR}/src/render/rt64_vi_renderer.cpp"
     "${PROJECT_SOURCE_DIR}/src/render/rt64_wr64_layer_trace.cpp"
+    "${PROJECT_SOURCE_DIR}/src/render/rt64_wr64_librashader.cpp"
 
     "${PROJECT_SOURCE_DIR}/src/preset/rt64_preset.cpp"
     "${PROJECT_SOURCE_DIR}/src/preset/rt64_preset_draw_call.cpp"

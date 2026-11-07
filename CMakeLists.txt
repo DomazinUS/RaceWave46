@@ -362,7 +362,10 @@ if(WR64_ENABLE_RT64)
     )
     target_include_directories(rt64 PRIVATE
         "${CMAKE_SOURCE_DIR}/include"
+        # librashader's C API header. The runtime library is loaded when present.
+        "${CMAKE_SOURCE_DIR}/lib/librashader/include"
     )
+    target_link_libraries(rt64 ${CMAKE_DL_LIBS})
     if(WIN32)
         target_include_directories(WaveRace64Recompiled PRIVATE
             lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/include
@@ -384,6 +387,23 @@ if(WR64_ENABLE_RT64)
     else()
         target_include_directories(WaveRace64Recompiled PRIVATE ${SDL2_INCLUDE_DIRS})
         target_link_libraries(WaveRace64Recompiled PRIVATE rt64 ${SDL2_LIBRARIES})
+    endif()
+
+    include("${CMAKE_SOURCE_DIR}/tools/prepare_librashader.cmake")
+    wr64_prepare_librashader(WR64_LIBRASHADER_RUNTIME)
+    if(WR64_LIBRASHADER_RUNTIME)
+        # The game looks for this exact name beside its executable.
+        if(WIN32)
+            set(wr64_librashader_name librashader.dll)
+        else()
+            set(wr64_librashader_name librashader.so)
+        endif()
+        add_custom_command(TARGET WaveRace64Recompiled POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${WR64_LIBRASHADER_RUNTIME}"
+                "$<TARGET_FILE_DIR:WaveRace64Recompiled>/${wr64_librashader_name}"
+            VERBATIM
+        )
     endif()
 endif()
 
@@ -456,6 +476,9 @@ if(WR64_ENABLE_FRONTEND)
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${CMAKE_SOURCE_DIR}/assets/manual"
             "$<TARGET_FILE_DIR:WaveRace64Recompiled>/assets/manual"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${CMAKE_SOURCE_DIR}/assets/shaders"
+            "$<TARGET_FILE_DIR:WaveRace64Recompiled>/assets/shaders"
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "${CMAKE_SOURCE_DIR}/assets/promptfont/promptfont.ttf"
             "${CMAKE_SOURCE_DIR}/assets/promptfont/LICENSE.txt"

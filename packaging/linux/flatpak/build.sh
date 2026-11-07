@@ -43,7 +43,7 @@ trap 'rm -f "$input/rom.z64"' EXIT
 install -m 600 "$rom" "$input/rom.z64"
 
 for ref in org.freedesktop.Sdk//26.08 org.freedesktop.Platform//26.08 \
-    org.freedesktop.Sdk.Extension.llvm22//26.08; do
+    org.freedesktop.Sdk.Extension.rust-stable//26.08 org.freedesktop.Sdk.Extension.llvm22//26.08; do
     flatpak info "$ref" >/dev/null 2>&1 ||
         flatpak install --user -y --noninteractive flathub "$ref"
 done
