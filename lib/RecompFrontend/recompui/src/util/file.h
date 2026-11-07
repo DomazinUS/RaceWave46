@@ -15,6 +15,8 @@ namespace recompui {
         void open_file_dialog(std::function<void(bool success, const std::filesystem::path& path)> callback);
         void open_file_dialog_multiple(std::function<void(bool success, const std::list<std::filesystem::path>& paths)> callback);
         void show_error_message_box(const char *title, const char *message);
+        // Reports an error from a launcher callback. On Linux it is shown inside the UI.
+        void show_launcher_error(const char *message);
     
         // Apple specific methods that usually require Objective-C. Implemented in support_apple.mm.
         #ifdef __APPLE__

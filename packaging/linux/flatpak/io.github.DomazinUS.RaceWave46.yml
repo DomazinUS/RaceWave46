@@ -1,0 +1,86 @@
+app-id: io.github.DomazinUS.RaceWave46
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm22
+command: racewave46
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  # GPU access, and gamepads plus rumble: there is no portal for game
+  # controllers yet, so SDL needs the evdev/hidraw device nodes.
+  - --device=all
+  - --socket=pulseaudio
+  # RetroAchievements sign-in, progress and badge images.
+  - --share=network
+  # Match the game's SDL window to this application's desktop entry.
+  - --env=SDL_APP_ID=io.github.DomazinUS.RaceWave46
+  - --env=SDL_VIDEO_WAYLAND_WMCLASS=io.github.DomazinUS.RaceWave46
+  - --env=SDL_VIDEO_X11_WMCLASS=io.github.DomazinUS.RaceWave46
+  # No file system access: the ROM is chosen through the FileChooser portal,
+  # the RetroAchievements login is kept through the Secret portal and links
+  # open through the OpenURI portal.
+
+build-options:
+  append-path: /usr/lib/sdk/llvm22/bin
+  env:
+    CC: clang
+    CXX: clang++
+
+modules:
+  - name: racewave46
+    buildsystem: simple
+    build-commands:
+      # Generates the recompiled code from the supplied ROM, verifies it against
+      # the release checksums and builds the game. The ROM is deleted afterwards.
+      - ./BUILD-USA.sh --rom rom.z64 --jobs "${FLATPAK_BUILDER_N_JOBS}"
+          --dxc-dir "${PWD}/dxc-1.8.2502/bin" --vulkan-dxc "${PWD}/dxc-1.9.2607/bin/dxc"
+      - rm -f rom.z64
+      - install -Dm755 build/WaveRace64Recompiled -t /app/lib/racewave46
+      - cp -r build/assets /app/lib/racewave46/assets
+      # The game finds its assets beside the resolved executable, so a symlink
+      # keeps them out of /app/bin.
+      - install -d /app/bin
+      - ln -s ../lib/racewave46/WaveRace64Recompiled /app/bin/racewave46
+      - install -Dm644 COPYING LICENSE THIRD-PARTY-NOTICES.md -t /app/share/licenses/io.github.DomazinUS.RaceWave46
+      - install -Dm644 packaging/linux/io.github.DomazinUS.RaceWave46.desktop -t /app/share/applications
+      - install -Dm644 packaging/linux/io.github.DomazinUS.RaceWave46.metainfo.xml -t /app/share/metainfo
+      # The Windows icon is a single embedded 256x256 PNG; install that image.
+      - >-
+        python3 -c 'import struct, sys;
+        data = open("resources/WaveRace.ico", "rb").read();
+        size, offset = struct.unpack_from("<II", data, 6 + 8);
+        image = data[offset:offset + size];
+        assert image[:8] == b"\x89PNG\r\n\x1a\n";
+        open(sys.argv[1], "wb").write(image)' icon.png
+      - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/io.github.DomazinUS.RaceWave46.png
+    sources:
+      - type: dir
+        path: ../../..
+        skip:
+          - .git
+          - .flatpak-builder
+          - .flatpak-input
+          - build
+          - build-tools
+          - build-flatpak
+          - RecompiledFuncsPoint0
+      # Your own ROM, copied here by build.sh. It is never installed.
+      - type: file
+        path: ../../../.flatpak-input/rom.z64
+        dest-filename: rom.z64
+      # Pinned Microsoft DXC releases for the shaders (see tools/prepare_dxc.cmake
+      # and lib/rt64/cmake/wr64_vulkan_shaders.cmake).
+      - type: archive
+        url: https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.8.2502/linux_dxc_2025_02_20.x86_64.tar.gz
+        sha256: e0580d90dbf6053a783ddd8d5153285f0606e5deaad17a7a6452f03acdf88c71
+        strip-components: 0
+        dest: dxc-1.8.2502
+      - type: archive
+        url: https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2607/linux_dxc_2026_07_29.x86_x64.tar.gz
+        sha256: 55665c87824051ed4774ff3280a79ccbbb7d39243b9736ca5e98222134112d54
+        dest: dxc-1.9.2607
+

@@ -69,7 +69,12 @@ elseif (APPLE)
         set (SPIRVCROSS "DYLD_LIBRARY_PATH=${PROJECT_SOURCE_DIR}/src/contrib/spirv-cross/lib/arm64:$ENV{DYLD_LIBRARY_PATH}" "${PROJECT_SOURCE_DIR}/src/contrib/spirv-cross/bin/arm64/spirv-cross")
     endif()
 else()
-    if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    if (WR64_DXC_BIN)
+        # The pinned DXC toolchain from tools/prepare_dxc.cmake. Its compiler
+        # finds the libraries through its own $ORIGIN/../lib runpath.
+        set (DXC "${WR64_DXC_BIN}/dxc")
+        set(DXC_TOOL_DEPENDENCIES "${DXC}" "${WR64_DXC_BIN}/../lib/libdxcompiler.so" "${WR64_DXC_BIN}/../lib/libdxil.so")
+    elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
         set (DXC "LD_LIBRARY_PATH=${PROJECT_SOURCE_DIR}/src/contrib/dxc/lib/x64" "${PROJECT_SOURCE_DIR}/src/contrib/dxc/bin/x64/dxc-linux")
     else()
         set (DXC "LD_LIBRARY_PATH=${PROJECT_SOURCE_DIR}/src/contrib/dxc/lib/arm64" "${PROJECT_SOURCE_DIR}/src/contrib/dxc/bin/arm64/dxc-linux")

@@ -4,6 +4,9 @@
 #include <iterator>
 #include <stdexcept>
 #include <vector>
+#ifdef __linux__
+#include <unistd.h>
+#endif
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -105,9 +108,44 @@ static void credentials(const std::filesystem::path& root) {
     require(!p::save_credentials({}, first), "Empty credential directory accepted");
     require(!p::load_credentials({}), "Empty credential directory returned store");
     require(std::filesystem::remove(directory), "Synthetic fixture directory was not empty");
+#elif defined(__linux__)
+    // libsecret: the desktop keyring, or the Secret portal inside Flatpak.
+    // Without a running secret service, saving must fail rather than fall
+    // back to a plaintext file.
+    const auto directory = root / ("synthetic-platform-" + std::to_string(getpid()));
+    std::filesystem::create_directories(directory);
+    const p::Credentials first{"WR64-Synthetic-Fixture-User", "SYNTHETIC-TOKEN-NOT-A-REAL-ACCOUNT-0123456789"};
+    const p::Credentials second{"WR64-Second-Synthetic-User", "SYNTHETIC-REPLACEMENT-TOKEN-NOT-REAL-9876543210"};
+    p::remove_credentials(directory);
+    require(!p::load_credentials(directory), "Missing store returned credentials");
+    for (const p::Credentials bad : {p::Credentials{"", "test"}, p::Credentials{"user", ""},
+        p::Credentials{"user\nheader", "token"}, p::Credentials{"user", "token\r\n"},
+        p::Credentials{std::string(257, 'x'), "token"}, p::Credentials{"user", std::string(8193, 'x')}})
+        require(!p::save_credentials(directory, bad), "Invalid credentials accepted");
+    if (p::save_credentials(directory, first)) {
+        auto loaded = p::load_credentials(directory);
+        require(loaded && loaded->username == first.username && loaded->token == first.token, "Keyring roundtrip mismatch");
+        p::erase_secret(loaded->token);
+        require(p::save_credentials(directory, second), "Keyring replacement failed");
+        loaded = p::load_credentials(directory);
+        require(loaded && loaded->username == second.username && loaded->token == second.token, "Replacement roundtrip mismatch");
+        p::erase_secret(loaded->token);
+        require(!p::load_credentials(directory / "other-profile"), "Credentials leaked to another profile");
+        p::remove_credentials(directory);
+        require(!p::load_credentials(directory), "Credential removal failed");
+        std::printf("Linux keyring roundtrip verified.\n");
+    }
+    else {
+        std::printf("No secret service available; verified that nothing was stored.\n");
+        require(!p::load_credentials(directory), "A failed save left credentials behind");
+    }
+    require(std::filesystem::is_empty(directory), "Credentials were written to the profile directory");
+    std::filesystem::remove(directory);
+    require(!p::save_credentials({}, first), "Empty credential directory accepted");
+    require(!p::load_credentials({}), "Empty credential directory returned store");
 #else
-    require(!p::save_credentials(root, {"synthetic", "synthetic-token"}), "Non-Windows plaintext fallback enabled");
-    require(!p::load_credentials(root), "Non-Windows store unexpectedly available");
+    require(!p::save_credentials(root, {"synthetic", "synthetic-token"}), "Unsupported platform plaintext fallback enabled");
+    require(!p::load_credentials(root), "Unsupported platform store unexpectedly available");
 #endif
     std::string synthetic = "synthetic-secret";
     p::erase_secret(synthetic);

@@ -97,7 +97,7 @@ Separate windows requires Direct3D 12. Both windows share the primary window's r
 | **Configurable controls** | Keyboard and controller bindings, profiles, player assignment and a controller diagram showing the selected bindings. |
 | **Gameplay rumble** | A master toggle and independent strength settings for Player 1 and Player 2. |
 | **Input preferences** | Joystick deadzone and background controller-input settings. Keyboard input follows the primary window's focus. |
-| **Local progress** | Settings, imported ROM data, saves and ghosts stay in the installation's `.runtime` directory. Keep it when updating. |
+| **Local progress** | Settings, imported ROM data, saves and ghosts stay in the installation's `.runtime` directory on Windows, or in `~/.local/share/racewave46` on Linux. Keep it when updating. |
 | **Dolphin Time Trial ghost** | Added to this USA port: best-run recording and automatic saving/loading by course, difficulty and Reverse mode. A visibility setting lets you show or hide the ghost without disabling recording. |
 | **Texture packs and mods** | A Mods interface for compatible packs. Texture packs are optional and are not included in the Windows ZIP. |
 | **RetroAchievements** | Account sign-in, achievement browsing, account progress and animated softcore unlock notifications. |
@@ -120,6 +120,10 @@ The first release targets **Windows 10/11, 64-bit**. Detailed performance requir
 No game ROM, personal save, account credentials or installed texture packs are included. The release requires your own supported ROM; this project does not provide game downloads. The executable keeps its existing name even though the project is called RaceWave46.
 
 For an update, keep your `.runtime` directory. Compatible texture packs can be installed through **Settings → Mods**. RetroAchievements sign-in is available under **Settings → Achievements**.
+
+### Linux
+
+A Linux build and a Flatpak can be built from source; there is no prebuilt Linux download. See [BUILDING.md](BUILDING.md#building-racewave46-on-linux). Rendering uses Vulkan, and separate player windows (which require Direct3D 12) are not available. As on Windows, select your ROM with **Select USA ROM** in the main menu. This uses the desktop's file chooser portal, so it works on KDE, GNOME and other desktops with an xdg-desktop-portal backend.
 
 ## AI assistance
 

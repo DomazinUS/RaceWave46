@@ -92,6 +92,7 @@ void recompui::init_prompt_context() {
     prompt_content->set_border_radius(theme::border::radius_lg, Unit::Dp);
     prompt_content->set_border_color(theme::color::Border);
     prompt_content->set_background_color(theme::color::ModalOverlay);
+    prompt_content->set_color(theme::color::Text);
     
     prompt_state.prompt_header = context.create_element<Label>(prompt_content, "", LabelStyle::Large);
     prompt_state.prompt_header->set_margin(24, Unit::Dp);

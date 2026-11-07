@@ -1,7 +1,9 @@
 #include "wr64_diagnostic_policy.h"
 #include "wr64_composer_window.hpp"
 
-#ifdef WR64_ENABLE_RT64
+// The layer composer is a Win32 developer tool. Other hosts use the no-op
+// implementation below.
+#if defined(WR64_ENABLE_RT64) && defined(_WIN32)
 
 #include <algorithm>
 #include <array>

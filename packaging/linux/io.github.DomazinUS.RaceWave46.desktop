@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=RaceWave46
+GenericName=Jet Ski Racing Game
+Comment=Wave Race 64 recompiled for modern systems, using your own ROM
+Icon=io.github.DomazinUS.RaceWave46
+Exec=racewave46
+Terminal=false
+Categories=Game;ActionGame;
+Keywords=Wave Race;N64;Nintendo 64;Recompiled;Jet Ski;
+PrefersNonDefaultGPU=true
+SingleMainWindow=true

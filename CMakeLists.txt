@@ -14,7 +14,7 @@ if(WIN32)
 endif()
 
 set(WR64_RT64_DEFAULT OFF)
-if(MSVC)
+if(MSVC OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(WR64_RT64_DEFAULT ON)
 endif()
 option(WR64_ENABLE_RT64 "Build the native host with RT64 game rendering" ${WR64_RT64_DEFAULT})
@@ -24,8 +24,20 @@ if(WR64_ENABLE_DIAGNOSTICS)
 endif()
 
 if(WR64_ENABLE_RT64)
-    if(NOT WIN32)
-        message(FATAL_ERROR "The initial Wave Race RT64 host currently supports Windows only.")
+    if(NOT WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        message(FATAL_ERROR "The Wave Race RT64 host supports Windows and Linux.")
+    endif()
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        # Linux renders through Vulkan into the SDL window, like other
+        # N64Recomp hosts. SDL2 comes from the system or Flatpak runtime.
+        set(RT64_SDL_WINDOW_VULKAN ON CACHE BOOL "" FORCE)
+        # RT64 defines these only for its own directory. recompui and this
+        # host include the same plume headers and must agree on RenderWindow.
+        add_compile_definitions(RT64_SDL_WINDOW_VULKAN PLUME_SDL_VULKAN_ENABLED)
+        # File dialogs (ROM selection, mod installation) go through the
+        # xdg-desktop-portal FileChooser rather than linking GTK.
+        set(NFD_PORTAL ON CACHE BOOL "" FORCE)
+        find_package(SDL2 REQUIRED)
     endif()
     set(RT64_STATIC TRUE)
     set(ZSTD_MULTITHREAD_SUPPORT OFF CACHE BOOL "" FORCE)
@@ -74,6 +86,11 @@ endif()
 
 option(WR64_ENABLE_FRONTEND "Build RecompFrontend (recompui + recompinput)" OFF)
 
+if(WR64_ENABLE_RT64 AND NOT WIN32 AND NOT WR64_ENABLE_FRONTEND)
+    # Input on non-Windows hosts comes only from recompinput.
+    message(FATAL_ERROR "The Linux RT64 host requires WR64_ENABLE_FRONTEND=ON.")
+endif()
+
 if(WR64_ENABLE_FRONTEND)
     if(NOT WR64_ENABLE_RT64)
         message(FATAL_ERROR "WR64_ENABLE_FRONTEND requires WR64_ENABLE_RT64.")
@@ -104,8 +121,10 @@ if(WR64_ENABLE_FRONTEND)
     set(RECOMP_FRONTEND_N64MODERNRUNTIME_PATH "${CMAKE_SOURCE_DIR}/lib/N64ModernRuntime")
     set(RECOMP_FRONTEND_RT64_PATH "${CMAKE_SOURCE_DIR}/lib/rt64")
 
-    set(sdl2_SOURCE_DIR
-        "${CMAKE_SOURCE_DIR}/lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3")
+    if(WIN32)
+        set(sdl2_SOURCE_DIR
+            "${CMAKE_SOURCE_DIR}/lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3")
+    endif()
 
     set(WR64_RT64_DIR "${CMAKE_SOURCE_DIR}/lib/rt64")
 
@@ -128,8 +147,13 @@ if(WR64_ENABLE_FRONTEND)
         endif()
     endforeach()
 
-    set(DXC             "${WR64_DXC_BIN}/dxc.exe")
-    set(DXC_TOOL_DEPENDENCIES "${DXC}" "${WR64_DXC_BIN}/dxcompiler.dll" "${WR64_DXC_BIN}/dxil.dll")
+    if(WIN32)
+        set(DXC             "${WR64_DXC_BIN}/dxc.exe")
+        set(DXC_TOOL_DEPENDENCIES "${DXC}" "${WR64_DXC_BIN}/dxcompiler.dll" "${WR64_DXC_BIN}/dxil.dll")
+    else()
+        set(DXC             "${WR64_DXC_BIN}/dxc")
+        set(DXC_TOOL_DEPENDENCIES "${DXC}" "${WR64_DXC_BIN}/../lib/libdxcompiler.so" "${WR64_DXC_BIN}/../lib/libdxil.so")
+    endif()
     set(DXC_COMMON_OPTS "-I${WR64_RT64_DIR}/src")
     set(DXC_DXIL_OPTS   "-Wno-ignored-attributes")
     set(DXC_SPV_OPTS    "-spirv" "-fspv-target-env=vulkan1.0" "-fvk-use-dx-layout")
@@ -137,7 +161,7 @@ if(WR64_ENABLE_FRONTEND)
     set(DXC_VS_OPTS     "${DXC_COMMON_OPTS}" "-E" "VSMain" "-T vs_6_3" "-fvk-invert-y")
 
     if(NOT EXISTS "${DXC}")
-        message(FATAL_ERROR "dxc.exe not found at ${DXC}")
+        message(FATAL_ERROR "DXC not found at ${DXC}")
     endif()
 
     add_subdirectory(lib/RecompFrontend)
@@ -334,26 +358,33 @@ if(WR64_ENABLE_RT64)
         lib/rt64/src/contrib/hlslpp/include
         lib/rt64/src/contrib/imgui
         lib/rt64/src/contrib/mupen64plus-core/src/api
-        lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/include
         lib/rt64/src/contrib/dxc/inc
     )
     target_include_directories(rt64 PRIVATE
         "${CMAKE_SOURCE_DIR}/include"
     )
-    target_link_directories(WaveRace64Recompiled PRIVATE
-        lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/lib/x64
-    )
-    target_link_libraries(WaveRace64Recompiled PRIVATE rt64 Xinput9_1_0)
-    set_property(TARGET WaveRace64Recompiled APPEND PROPERTY LINK_DEPENDS
-        "${WR64_DXC_BIN}/dxcompiler.dll" "${WR64_DXC_BIN}/dxil.dll")
-    add_custom_command(TARGET WaveRace64Recompiled POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/lib/x64/SDL2.dll"
-            "${WR64_DXC_BIN}/dxcompiler.dll"
-            "${WR64_DXC_BIN}/dxil.dll"
-            "$<TARGET_FILE_DIR:WaveRace64Recompiled>"
-        VERBATIM
-    )
+    if(WIN32)
+        target_include_directories(WaveRace64Recompiled PRIVATE
+            lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/include
+        )
+        target_link_directories(WaveRace64Recompiled PRIVATE
+            lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/lib/x64
+        )
+        target_link_libraries(WaveRace64Recompiled PRIVATE rt64 Xinput9_1_0)
+        set_property(TARGET WaveRace64Recompiled APPEND PROPERTY LINK_DEPENDS
+            "${WR64_DXC_BIN}/dxcompiler.dll" "${WR64_DXC_BIN}/dxil.dll")
+        add_custom_command(TARGET WaveRace64Recompiled POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${CMAKE_SOURCE_DIR}/lib/rt64/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/lib/x64/SDL2.dll"
+                "${WR64_DXC_BIN}/dxcompiler.dll"
+                "${WR64_DXC_BIN}/dxil.dll"
+                "$<TARGET_FILE_DIR:WaveRace64Recompiled>"
+            VERBATIM
+        )
+    else()
+        target_include_directories(WaveRace64Recompiled PRIVATE ${SDL2_INCLUDE_DIRS})
+        target_link_libraries(WaveRace64Recompiled PRIVATE rt64 ${SDL2_LIBRARIES})
+    endif()
 endif()
 
 if(WR64_ENABLE_FRONTEND)
@@ -437,6 +468,13 @@ endif()
 
 if(WIN32 OR CYGWIN)
     target_link_libraries(WaveRace64Recompiled PRIVATE user32 gdi32 shell32 winhttp crypt32)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # RetroAchievements networking and login storage. In a Flatpak sandbox
+    # libsecret stores the login through the Secret portal.
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(WR64_LINUX_PLATFORM REQUIRED IMPORTED_TARGET libcurl libsecret-1)
+    find_package(Threads REQUIRED)
+    target_link_libraries(WaveRace64Recompiled PRIVATE PkgConfig::WR64_LINUX_PLATFORM Threads::Threads ${CMAKE_DL_LIBS})
 endif()
 
 set_target_properties(WaveRace64Recompiled PROPERTIES

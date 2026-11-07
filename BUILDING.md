@@ -42,3 +42,38 @@ Some suites require a user-supplied ROM (`-UsaRom`) or explicit input files. The
 Use the bundled recompiler version, symbol tables, configuration and integration scripts together. Do not replace vendored dependencies with unmodified upstream checkouts: this project includes changes to them. If developing new hooks, update the generation checksums after reviewing the resulting code.
 
 This validates a source build with the listed dependencies, not a byte-for-byte reproducible compiler toolchain or deterministic executable hash.
+
+# Building RaceWave46 on Linux
+
+The Linux host renders with RT64 through Vulkan into an SDL2 window and always includes the frontend. It needs a C/C++ toolchain (Clang is preferred and used when available), CMake 3.20 or newer, Ninja, Python 3.11 or newer, pkg-config, and development files for SDL2, Vulkan, libcurl, libsecret and D-Bus. The Freedesktop 26.08 SDK used by the Flatpak below provides all of them. Only x86_64 is supported, because the pinned DXC shader compilers are x86_64 binaries.
+
+From this directory:
+
+```sh
+./BUILD-USA.sh --rom "/path/to/Wave Race 64 (USA) (Rev 1).z64"
+```
+
+The script builds `N64Recomp` and `RSPRecomp` from the bundled source into `build-tools` when they are missing, generates and verifies the code exactly as on Windows, and builds `build/WaveRace64Recompiled`. The generated code is identical on both platforms. Subsequent builds can omit `--rom`. The first configuration downloads Microsoft's pinned Linux DXC 1.8.2502 and 1.9.2607 archives and checks their hashes. For an offline build pass `--dxc-dir /path/to/dxc-1.8.2502/bin` (the extracted archive's `bin`, with its `lib` beside it) and `--vulkan-dxc /path/to/dxc-1.9.2607/bin/dxc`. Run `./BUILD-USA.sh --help` for the remaining options.
+
+Start the game with `build/WaveRace64Recompiled`. It loads its `assets` from beside the executable, so the working directory does not matter.
+
+Settings, the imported ROM, saves and ghosts are stored in `$XDG_DATA_HOME/racewave46` (normally `~/.local/share/racewave46`) instead of a `.runtime` directory beside the executable. `--runtime-dir` still selects another profile. The RetroAchievements login is kept in the desktop keyring through libsecret. Separate player windows require Direct3D 12 and are not available on Linux.
+
+As on Windows, choose the ROM with **Select USA ROM** in the main menu. The file dialog goes through the xdg-desktop-portal FileChooser, so it works on any desktop with a portal backend (for example `xdg-desktop-portal-kde`, `xdg-desktop-portal-gnome` or `xdg-desktop-portal-wlr` with `xdg-desktop-portal-gtk`); no GTK or Qt library is linked into the game. Without a backend the game reports that the file dialog is unavailable.
+
+To run a test suite, use `./BUILD-TEST.sh --suite achievements_platform`; `--usa-rom` and extra CMake options after `--` work like the PowerShell script's parameters. Suites that compile Windows code remain Windows-only.
+
+## Flatpak
+
+`packaging/linux` contains a Flatpak for the Freedesktop 26.08 runtime. It starts the game directly; on the first start, choose the ROM with **Select USA ROM** in the main menu, exactly as on Windows. Once a valid ROM is stored, the option reads **Start Game**.
+
+Build and install it for the current user with `flatpak` and `flatpak-builder` installed:
+
+```sh
+packaging/linux/flatpak/build.sh --rom "/path/to/Wave Race 64 (USA) (Rev 1).z64"
+flatpak run io.github.DomazinUS.RaceWave46
+```
+
+The script installs the Freedesktop SDK and LLVM extension from Flathub when needed, copies the ROM into the ignored `.flatpak-input` directory for the build, and deletes it afterwards. The ROM itself is not installed, but the package contains code generated from it: keep the Flatpak for your own use and do not redistribute it.
+
+The sandbox has no file system access. Its profile is `~/.var/app/io.github.DomazinUS.RaceWave46/data/racewave46`. It uses the FileChooser and Documents portals for the ROM, the Secret portal for the RetroAchievements login, and the OpenURI portal for links and the mods folder. It requests network access for RetroAchievements, Wayland/X11, PulseAudio and `--device=all`; the last is needed because no portal exposes game controllers and rumble yet.
