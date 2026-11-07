@@ -123,7 +123,7 @@ For an update, keep your `.runtime` directory. Compatible texture packs can be i
 
 ### Linux
 
-A Linux build and a Flatpak can be built from source; there is no prebuilt Linux download. See [BUILDING.md](BUILDING.md#building-racewave46-on-linux). Rendering uses Vulkan, and separate player windows (which require Direct3D 12) are not available. The Flatpak asks for your ROM on its first start and then opens straight into the game.
+A Linux build and a Flatpak can be built from source; there is no prebuilt Linux download. See [BUILDING.md](BUILDING.md#building-racewave46-on-linux). Rendering uses Vulkan, and separate player windows (which require Direct3D 12) are not available. As on Windows, select your ROM with **Select USA ROM** in the main menu. This uses the desktop's file chooser portal, so it works on KDE, GNOME and other desktops with an xdg-desktop-portal backend.
 
 ## AI assistance
 

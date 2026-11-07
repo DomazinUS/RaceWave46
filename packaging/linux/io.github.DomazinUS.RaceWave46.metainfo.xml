@@ -16,8 +16,8 @@
     </p>
     <p>
       No game data is included. On first start you select your own unmodified Wave Race 64 USA
-      Rev 1 ROM; it is checked and copied into the application's private data, and later starts
-      go straight to the game.
+      Rev 1 ROM from the main menu; it is checked and copied into the application's private
+      data, and later starts only need Start Game.
     </p>
   </description>
   <launchable type="desktop-id">io.github.DomazinUS.RaceWave46.desktop</launchable>

@@ -1,9 +1,8 @@
 app-id: io.github.DomazinUS.RaceWave46
-runtime: org.gnome.Platform
-runtime-version: '51'
-sdk: org.gnome.Sdk
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.rust-stable
   - org.freedesktop.Sdk.Extension.llvm22
 command: racewave46
 
@@ -26,7 +25,7 @@ finish-args:
   # open through the OpenURI portal.
 
 build-options:
-  append-path: /usr/lib/sdk/llvm22/bin:/usr/lib/sdk/rust-stable/bin
+  append-path: /usr/lib/sdk/llvm22/bin
   env:
     CC: clang
     CXX: clang++
@@ -42,6 +41,10 @@ modules:
       - rm -f rom.z64
       - install -Dm755 build/WaveRace64Recompiled -t /app/lib/racewave46
       - cp -r build/assets /app/lib/racewave46/assets
+      # The game finds its assets beside the resolved executable, so a symlink
+      # keeps them out of /app/bin.
+      - install -d /app/bin
+      - ln -s ../lib/racewave46/WaveRace64Recompiled /app/bin/racewave46
       - install -Dm644 COPYING LICENSE THIRD-PARTY-NOTICES.md -t /app/share/licenses/io.github.DomazinUS.RaceWave46
       - install -Dm644 packaging/linux/io.github.DomazinUS.RaceWave46.desktop -t /app/share/applications
       - install -Dm644 packaging/linux/io.github.DomazinUS.RaceWave46.metainfo.xml -t /app/share/metainfo
@@ -65,7 +68,6 @@ modules:
           - build-tools
           - build-flatpak
           - RecompiledFuncsPoint0
-          - packaging/linux/launcher/target
       # Your own ROM, copied here by build.sh. It is never installed.
       - type: file
         path: ../../../.flatpak-input/rom.z64
@@ -82,29 +84,3 @@ modules:
         sha256: 55665c87824051ed4774ff3280a79ccbbb7d39243b9736ca5e98222134112d54
         dest: dxc-1.9.2607
 
-  - name: racewave46-launcher
-    buildsystem: simple
-    build-options:
-      env:
-        CARGO_HOME: /run/build/racewave46-launcher/cargo
-        CARGO_NET_OFFLINE: 'true'
-        RACEWAVE46_APP_ID: io.github.DomazinUS.RaceWave46
-    build-commands:
-      - cargo --offline fetch --manifest-path Cargo.toml --verbose
-      - cargo --offline build --release --locked
-      - install -Dm755 target/release/racewave46 -t /app/bin
-    sources:
-      - type: dir
-        path: ../launcher
-        skip:
-          - target
-      - cargo-sources.json
-      - type: inline
-        dest: cargo
-        dest-filename: config
-        contents: |
-          [source.vendored-sources]
-          directory = "cargo/vendor"
-
-          [source.crates-io]
-          replace-with = "vendored-sources"

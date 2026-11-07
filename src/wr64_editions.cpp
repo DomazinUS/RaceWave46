@@ -90,8 +90,6 @@ Options parse_options(int argc, char** argv, const std::filesystem::path& defaul
         else if (item == "--runtime-dir") result.runtime = std::filesystem::absolute(std::filesystem::u8path(argument(i)));
         else if (item == "--rom") result.rom = std::filesystem::u8path(argument(i));
         else if (item == "--windowed") result.windowed = true;
-        else if (item == "--check-rom") { result.check_rom = true; result.launcher = false; }
-        else if (item == "--import-rom") { result.import_rom = std::filesystem::u8path(argument(i)); result.launcher = false; }
         else if (item == "--seconds") {
             const auto value = argument(i);
             const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result.seconds);
@@ -111,10 +109,6 @@ Options parse_options(int argc, char** argv, const std::filesystem::path& defaul
         else throw std::runtime_error("Unknown option: " + item);
     }
     if (result.seconds > 0) { result.launch = true; result.launcher = false; }
-    if (result.check_rom && !result.import_rom.empty())
-        throw std::runtime_error("--check-rom and --import-rom cannot be combined.");
-    if ((result.check_rom || !result.import_rom.empty()) && (result.launch || !result.rom.empty()))
-        throw std::runtime_error("ROM setup options cannot be combined with a game launch.");
     return result;
 }
 
