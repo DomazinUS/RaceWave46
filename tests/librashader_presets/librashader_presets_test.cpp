@@ -21,14 +21,14 @@ nlohmann::json manifest_with(nlohmann::json presets) {
     return {{"schema_version", 1}, {"presets", std::move(presets)}};
 }
 
-nlohmann::json entry(const std::string& id, const std::string& path, const std::string& input = "internal") {
-    return {{"id", id}, {"name", "Name " + id}, {"description", "About " + id}, {"path", path}, {"input", input}};
+nlohmann::json entry(const std::string& id, const std::string& path, const std::string& label = "Label") {
+    return {{"id", id}, {"label", label}, {"name", "Name " + id}, {"description", "About " + id}, {"path", path}};
 }
 
 void parsing_accepts_valid_entries_and_skips_invalid_ones() {
     std::vector<std::string> errors;
     const auto presets = parse_presets(manifest_with({
-        entry("crt-a", "crt/a.slangp", "native"),
+        entry("crt-a", "crt/a.slangp"),
         entry("crt-a", "crt/b.slangp"),
         entry("off", "c.slangp"),
         entry("Upper", "d.slangp"),
@@ -36,12 +36,12 @@ void parsing_accepts_valid_entries_and_skips_invalid_ones() {
         entry("absolute", "/etc/passwd.slangp"),
         entry("backslash", "crt\\e.slangp"),
         entry("wrong-type", "crt/f.slang"),
-        entry("bad-input", "crt/g.slangp", "hd"),
+        entry("no-label", "crt/g.slangp", ""),
         entry("sharp", "sharpen/h.slangp"),
     }), errors);
     check(presets.size() == 2, "only the two valid, unique presets are kept");
-    check(presets[0].id == "crt-a" && presets[0].recommended_input == InputNative, "first preset keeps its native input");
-    check(presets[1].id == "sharp" && presets[1].recommended_input == InputInternal, "second preset keeps its order");
+    check(presets[0].id == "crt-a" && presets[0].label == "Label", "the first preset keeps its menu label");
+    check(presets[1].id == "sharp", "the second preset keeps its order");
     check(errors.size() == 8, "each rejected entry is reported");
 }
 
@@ -55,15 +55,19 @@ void parsing_rejects_unknown_manifests() {
 
 void menu_values_map_to_presets() {
     std::vector<std::string> errors;
-    const auto presets = parse_presets(manifest_with({entry("one", "one.slangp"), entry("two", "two.slangp", "native")}), errors);
+    const auto presets = parse_presets(manifest_with({entry("one", "one.slangp"), entry("two", "two.slangp")}), errors);
     check(preset_for_value(presets, OffValue) == nullptr, "Off has no preset");
     check(preset_for_value(presets, 1)->id == "one", "value 1 is the first preset");
     check(preset_for_value(presets, 2)->id == "two", "value 2 is the second preset");
     check(preset_for_value(presets, 3) == nullptr, "out-of-range values are Off");
 
     check(preset_summary(presets, OffValue).empty(), "Off has no summary");
-    check(preset_summary(presets, 2) == "Name two: About two Recommended input: Native N64.", "native recommendation");
-    check(preset_summary(presets, 1) == "Name one: About one Recommended input: Internal.", "internal recommendation");
+    check(preset_summary(presets, 2) == "Name two: About two", "the description column names the shader");
+    std::vector<std::string> plain_errors;
+    const auto undescribed = parse_presets(manifest_with({
+        {{"id", "plain"}, {"label", "Plain"}, {"name", "Plain"}, {"description", ""}, {"path", "plain.slangp"}}
+    }), plain_errors);
+    check(preset_summary(undescribed, 1) == "Plain", "a shader without a description shows its name only");
 
     ControlState state{true, "", ""};
     check(preset_status(presets, 1, state).empty(), "a working preset has no status");
@@ -82,7 +86,7 @@ void description_text_is_escaped() {
 void selection_generation_tracks_preset_changes_only() {
     RT64::setWr64ShaderPreset("a.slangp");
     const auto first = RT64::getWr64ShaderSelection();
-    RT64::setWr64ShaderInput(InputNative);
+    RT64::setWr64ShaderInput(uint32_t(RT64::Wr64ShaderInput::Native));
     RT64::setWr64ShaderPreset("a.slangp");
     const auto same = RT64::getWr64ShaderSelection();
     check(same.presetGeneration == first.presetGeneration, "input changes and repeated presets keep the compiled chain");
@@ -153,7 +157,9 @@ void bundled_manifest_is_complete(const fs::path& shader_directory) {
     const auto presets = load_presets(shader_directory, errors);
     for (const auto& error : errors) std::cerr << error << '\n';
     check(errors.empty(), "the bundled manifest loads without errors");
-    check(presets.size() >= 10, "the bundled manifest lists the curated presets");
+    check(presets.size() == 2, "the bundled manifest lists the two CRT presets");
+    check(presets[0].label == "CRT" && presets[1].label == "Fast CRT",
+        "the menu choices are Off, CRT and Fast CRT");
     for (const auto& preset : presets) {
         std::set<fs::path> visited;
         check_preset_closure(shader_directory / utf8_path(preset.path), visited);

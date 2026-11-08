@@ -4,7 +4,6 @@
 #include "elements/ui_element.h"
 #include "elements/ui_label.h"
 #include "elements/ui_radio.h"
-#include "elements/ui_select.h"
 #include "elements/ui_text_input.h"
 #include "elements/ui_slider.h"
 #include "elements/ui_toggle.h"
@@ -49,8 +48,6 @@ namespace recompui {
 class ConfigOptionEnum : public ConfigOptionElement {
 protected:
     Radio *radio = nullptr;
-    // Used instead of the radio for long choice lists.
-    Select *select = nullptr;
     Label *details_label = nullptr;
 
     std::string_view get_type_name() override { return "ConfigOptionEnum"; }

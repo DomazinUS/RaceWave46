@@ -1,9 +1,0 @@
-shaders = 1
-
-shader0 = ../slang/misc/shaders/image-adjustment.slang
-scale_type0 = source
-
-parameters = "ia_saturation;ia_contrast;ia_luminance"
-ia_saturation = 1.25
-ia_contrast = 1.06
-ia_luminance = 1.03

@@ -90,9 +90,10 @@ std::vector<wr64::librashader::Preset> librashader_presets;
 std::filesystem::path librashader_shader_directory;
 uint64_t librashader_status_revision = ~uint64_t(0);
 constexpr const char* LibrashaderDescription =
-    "Applies a RetroArch shader preset to the game image through librashader. CRT presets imitate a tube television; "
-    "the others smooth edges, sharpen or adjust colours. Menus and this overlay are never filtered. "
-    "Selecting a preset compiles it the first time, which can briefly pause the picture. Off keeps the original image.";
+    "Runs the game image through a CRT shader with librashader, imitating the tube television the game was made for. "
+    "Both choices draw the image at the console's 240 lines, as the original hardware did, and the picture returns to the "
+    "window's resolution when set to Off. The selected shader compiles when the game starts and when it is picked, which can "
+    "briefly pause the picture. Menus and this overlay are never filtered.";
 
 constexpr double DefaultWaveRoundnessPercent = 50.0;
 constexpr const char *EnhancementsTabName = "Enhancements";
@@ -347,6 +348,9 @@ void updateSkyReflectionControls(recomp::config::Config& config) {
 
 void applyLibrashaderPreset(uint32_t value) {
     const auto* preset = wr64::librashader::preset_for_value(librashader_presets, value);
+    // Both CRT shaders are written for the console's 240 lines; Off returns to the unfiltered window-resolution image.
+    RT64::setWr64ShaderInput(preset == nullptr ?
+        uint32_t(RT64::Wr64ShaderInput::Internal) : uint32_t(RT64::Wr64ShaderInput::Native));
     if (preset == nullptr) {
         RT64::setWr64ShaderPreset({});
         return;
@@ -367,10 +371,7 @@ void updateLibrashaderControls(recomp::config::Config& config) {
         state.preset_error = status.message;
     }
 
-    const bool input_unavailable = !availability.loaded || value == OffValue;
     config.update_option_disabled(PresetOptionId, !availability.loaded);
-    config.update_option_hidden(InputOptionId, input_unavailable);
-    config.update_option_disabled(InputOptionId, input_unavailable);
     const std::string details = preset_status(librashader_presets, value, state);
     const size_t option_index = config.get_config_schema().options_by_id.at(PresetOptionId);
     if (config.get_enum_option_details(option_index) != details) {
@@ -714,13 +715,13 @@ void configure() {
                 std::fprintf(stderr, "[librashader] %s\n", error.c_str());
             }
 
-            std::vector<recomp::config::ConfigOptionEnumOption> preset_choices{{OffValue, "Off"}};
+            std::vector<recomp::config::ConfigOptionEnumOption> preset_choices{{OffValue, "off", "Off"}};
             for (size_t index = 0; index < librashader_presets.size(); ++index) {
                 const auto& preset = librashader_presets[index];
-                preset_choices.emplace_back(uint32_t(index + 1), preset.id, preset.name);
+                preset_choices.emplace_back(uint32_t(index + 1), preset.id, preset.label);
             }
 
-            enhancementsConfig.add_enum_option(PresetOptionId, "librashader", LibrashaderDescription,
+            enhancementsConfig.add_enum_option(PresetOptionId, "CRT Shader", LibrashaderDescription,
                 preset_choices, OffValue);
             enhancementsConfig.add_option_change_callback(PresetOptionId,
                 [](recomp::config::ConfigValueVariant value, recomp::config::ConfigValueVariant,
@@ -728,13 +729,6 @@ void configure() {
                     applyLibrashaderPreset(std::get<uint32_t>(value));
                     updateLibrashaderControls(recompui::config::get_config(EnhancementsTabId));
                 });
-            enhancementsConfig.add_enum_option(InputOptionId, "librashader Input",
-                "Internal (HD) passes the image at the window's resolution, which suits anti-aliasing, sharpening and colour presets. "
-                "Native N64 first reduces it to the console's 240 lines, which CRT and pixel-art presets are designed for.",
-                {{InputInternal, "Internal", "Internal (HD)"}, {InputNative, "Native", "Native N64"}}, InputInternal);
-            enhancementsConfig.add_option_change_callback(InputOptionId,
-                [](recomp::config::ConfigValueVariant value, recomp::config::ConfigValueVariant,
-                    recomp::config::OptionChangeContext) { RT64::setWr64ShaderInput(std::get<uint32_t>(value)); });
         }
         enhancementsConfig.add_number_option(
             WaveRoundnessOptionId,

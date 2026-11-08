@@ -123,73 +123,46 @@ ConfigOptionEnum::ConfigOptionEnum(
     const bool capability_details = option_id == "water_reflections" ||
         option_id == "sky_reflection_method" || option_id == "shadow_method" ||
         option_id == "split_screen_layout";
-    // Too many choices for one row of radio tabs.
-    const bool select_choices = option_id == "librashader_preset";
-    if (capability_details || select_choices) {
+    if (capability_details) {
         wrapper->set_flex_direction(FlexDirection::Column);
         wrapper->set_align_items(AlignItems::FlexStart);
         wrapper->set_gap(4.0f);
     }
 
+    // Negates the extra padding that radio tabs automatically add.
+    name_label->set_margin_bottom(4.0f);
+
     auto &enum_opt = config->get_option_config<recomp::config::ConfigOptionEnum>(this->option_index);
-    if (select_choices) {
-        std::vector<SelectOption> choices;
-        for (const auto &choice : enum_opt.options) {
-            choices.emplace_back(choice.name, std::to_string(choice.value));
+    radio = context.create_element<Radio>(wrapper);
+    if (option_id == config::graphics::options::res_option) {
+        // Fixed HD choices need a second row in narrower settings panels.
+        // Keep each choice whole, with the existing left/right navigation order.
+        radio->set_width(100.0f, Unit::Percent);
+        radio->set_flex_wrap(FlexWrap::Wrap);
+        radio->set_gap(12.0f);
+    }
+    radio->set_focus_callback([this](bool active) {
+        if (active) {
+            this->on_hover(this->option_id);
         }
+    });
+    radio->add_index_changed_callback([this](uint32_t index) {
+        auto &enum_opt = this->config->get_option_config<recomp::config::ConfigOptionEnum>(this->option_index);
+        if (index < enum_opt.options.size()) {
+            this->set_option_value(this->option_id, enum_opt.options[index].value);
+        }
+    });
 
-        Element *select_container = context.create_element<Element>(wrapper, 0, "div", false);
-        select_container->set_width(360.0f);
-        select_container->set_max_width(100.0f, Unit::Percent);
-        select = context.create_element<Select>(
-            select_container, choices, std::to_string(std::get<uint32_t>(get_value())));
-        select->set_focus_callback([this](bool active) {
-            if (active) {
-                this->on_hover(this->option_id);
-            }
-        });
-        select->add_change_callback([this](SelectOption &choice, int) {
-            const uint32_t value = static_cast<uint32_t>(std::stoul(choice.value));
-            // Programmatic selection updates also report a change.
-            if (std::get<uint32_t>(this->get_value()) != value) {
-                this->set_option_value(this->option_id, value);
-            }
-        });
-    } else {
-        // Negates the extra padding that radio tabs automatically add.
-        name_label->set_margin_bottom(4.0f);
-
-        radio = context.create_element<Radio>(wrapper);
+    for (uint32_t i = 0; i < enum_opt.options.size(); i++) {
+        radio->add_option(enum_opt.options[i].name);
         if (option_id == config::graphics::options::res_option) {
-            // Fixed HD choices need a second row in narrower settings panels.
-            // Keep each choice whole, with the existing left/right navigation order.
-            radio->set_width(100.0f, Unit::Percent);
-            radio->set_flex_wrap(FlexWrap::Wrap);
-            radio->set_gap(12.0f);
-        }
-        radio->set_focus_callback([this](bool active) {
-            if (active) {
-                this->on_hover(this->option_id);
-            }
-        });
-        radio->add_index_changed_callback([this](uint32_t index) {
-            auto &enum_opt = this->config->get_option_config<recomp::config::ConfigOptionEnum>(this->option_index);
-            if (index < enum_opt.options.size()) {
-                this->set_option_value(this->option_id, enum_opt.options[index].value);
-            }
-        });
-
-        for (uint32_t i = 0; i < enum_opt.options.size(); i++) {
-            radio->add_option(enum_opt.options[i].name);
-            if (option_id == config::graphics::options::res_option) {
-                radio->get_option_element(i)->set_flex_shrink(0.0f);
-            }
+            radio->get_option_element(i)->set_flex_shrink(0.0f);
         }
     }
 
     details_label = context.create_element<Label>(wrapper, "", theme::Typography::LabelXS);
     details_label->set_color(theme::color::Primary);
-    if (capability_details || select_choices) details_label->set_width(100.0f, Unit::Percent);
+    if (capability_details) details_label->set_width(100.0f, Unit::Percent);
 
     update_value();
     update_enum_details();
@@ -199,11 +172,6 @@ ConfigOptionEnum::ConfigOptionEnum(
 void ConfigOptionEnum::update_value() {
     recomp::config::ConfigValueVariant value_variant = get_value();
     uint32_t option_value = std::get<uint32_t>(value_variant);
-
-    if (select != nullptr) {
-        select->set_selection(std::to_string(option_value));
-        return;
-    }
 
     auto &enum_opt = config->get_option_config<recomp::config::ConfigOptionEnum>(this->option_index);
     for (uint32_t i = 0; i < enum_opt.options.size(); i++) {
@@ -231,10 +199,6 @@ void ConfigOptionEnum::update_enum_details() {
 
 void ConfigOptionEnum::update_enum_disabled() {
     bool all_disabled = get_disabled();
-    if (select != nullptr) {
-        select->set_enabled(!all_disabled);
-        return;
-    }
 
     auto &enum_opt = config->get_option_config<recomp::config::ConfigOptionEnum>(option_index);
     for (uint32_t i = 0; i < enum_opt.options.size(); i++) {

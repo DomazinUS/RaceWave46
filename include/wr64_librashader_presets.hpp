@@ -12,19 +12,17 @@
 namespace wr64::librashader {
 
 constexpr const char* PresetOptionId = "librashader_preset";
-constexpr const char* InputOptionId = "librashader_input";
 constexpr uint32_t OffValue = 0u;
-constexpr uint32_t InputInternal = 0u;
-constexpr uint32_t InputNative = 1u;
 
 struct Preset {
     // Saved in the settings profile; must stay stable across releases.
     std::string id;
+    // Text on the choice itself; the name below is the full shader name.
+    std::string label;
     std::string name;
     std::string description;
     // Relative to the shader directory.
     std::string path;
-    uint32_t recommended_input = InputInternal;
 };
 
 // UTF-8 manifest text to a path, without C++20's deprecated u8path.
@@ -79,12 +77,12 @@ inline std::vector<Preset> parse_presets(const nlohmann::json& manifest, std::ve
 
         Preset preset;
         preset.id = entry.value("id", std::string{});
+        preset.label = entry.value("label", std::string{});
         preset.name = entry.value("name", std::string{});
         preset.description = entry.value("description", std::string{});
         preset.path = entry.value("path", std::string{});
-        const std::string input = entry.value("input", std::string{"internal"});
-        if (!valid_preset_id(preset.id) || preset.name.empty() || !valid_preset_path(preset.path) ||
-            (input != "internal" && input != "native")) {
+        if (!valid_preset_id(preset.id) || preset.label.empty() || preset.name.empty() ||
+            !valid_preset_path(preset.path)) {
             errors.emplace_back("invalid shader preset entry '" + preset.id + "'");
             continue;
         }
@@ -94,7 +92,6 @@ inline std::vector<Preset> parse_presets(const nlohmann::json& manifest, std::ve
             continue;
         }
 
-        preset.recommended_input = input == "native" ? InputNative : InputInternal;
         presets.push_back(std::move(preset));
     }
 
@@ -156,10 +153,7 @@ inline std::string preset_summary(const std::vector<Preset>& presets, uint32_t v
     const Preset* preset = preset_for_value(presets, value);
     if (preset == nullptr) return "";
 
-    std::string summary = preset->name + ": ";
-    if (!preset->description.empty()) summary += preset->description + " ";
-    return summary + (preset->recommended_input == InputNative ?
-        "Recommended input: Native N64." : "Recommended input: Internal.");
+    return preset->description.empty() ? preset->name : preset->name + ": " + preset->description;
 }
 
 // The description column renders RML, and manifest text must not inject markup.
