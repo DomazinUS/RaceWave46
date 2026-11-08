@@ -30,12 +30,13 @@ recording = recording[:-len('            }\n')]
 functions.append('void recordBothOutputs(PresentQueue &q, RenderCommandList *commandList, '
     'VIRenderer::RenderParams renderParams, bool secondaryPresentFrame, bool displayedSeparateRace, '
     'uint32_t secondarySwapChainIndex, uint32_t swapChainIndex, RenderTexture *swapChainTexture, '
-    'RenderFramebuffer *swapChainFramebuffer) {\n'
+    'RenderFramebuffer *swapChainFramebuffer, bool primaryShader = false, bool secondaryShader = false) {\n'
     'auto &ext=q.ext; auto &secondarySwapChain=q.secondarySwapChain; '
     'auto &secondaryFramebuffers=q.secondaryFramebuffers; auto &secondaryViRenderer=q.secondaryViRenderer; '
     'auto &viRenderer=q.viRenderer; auto &inspectorMutex=q.inspectorMutex; auto &inspector=q.inspector; '
     'auto &acquiredSemaphore=q.acquiredSemaphore; auto &secondaryAcquiredSemaphore=q.secondaryAcquiredSemaphore; '
-    'auto &drawSemaphores=q.drawSemaphores; auto &secondaryDrawSemaphores=q.secondaryDrawSemaphores;\n'
+    'auto &drawSemaphores=q.drawSemaphores; auto &secondaryDrawSemaphores=q.secondaryDrawSemaphores; '
+    'auto &librashaderOutput=q.librashaderOutput; auto &secondaryLibrashaderOutput=q.secondaryLibrashaderOutput;\n'
     + recording + '\n}')
 
 # Source contracts protect the transaction boundaries that extraction omits.

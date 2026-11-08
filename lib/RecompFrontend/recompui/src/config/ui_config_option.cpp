@@ -132,6 +132,7 @@ ConfigOptionEnum::ConfigOptionEnum(
     // Negates the extra padding that radio tabs automatically add.
     name_label->set_margin_bottom(4.0f);
 
+    auto &enum_opt = config->get_option_config<recomp::config::ConfigOptionEnum>(this->option_index);
     radio = context.create_element<Radio>(wrapper);
     if (option_id == config::graphics::options::res_option) {
         // Fixed HD choices need a second row in narrower settings panels.
@@ -152,17 +153,16 @@ ConfigOptionEnum::ConfigOptionEnum(
         }
     });
 
-    details_label = context.create_element<Label>(wrapper, "", theme::Typography::LabelXS);
-    details_label->set_color(theme::color::Primary);
-    if (capability_details) details_label->set_width(100.0f, Unit::Percent);
-
-    auto &enum_opt = config->get_option_config<recomp::config::ConfigOptionEnum>(this->option_index);
     for (uint32_t i = 0; i < enum_opt.options.size(); i++) {
         radio->add_option(enum_opt.options[i].name);
         if (option_id == config::graphics::options::res_option) {
             radio->get_option_element(i)->set_flex_shrink(0.0f);
         }
     }
+
+    details_label = context.create_element<Label>(wrapper, "", theme::Typography::LabelXS);
+    details_label->set_color(theme::color::Primary);
+    if (capability_details) details_label->set_width(100.0f, Unit::Percent);
 
     update_value();
     update_enum_details();
@@ -199,6 +199,7 @@ void ConfigOptionEnum::update_enum_details() {
 
 void ConfigOptionEnum::update_enum_disabled() {
     bool all_disabled = get_disabled();
+
     auto &enum_opt = config->get_option_config<recomp::config::ConfigOptionEnum>(option_index);
     for (uint32_t i = 0; i < enum_opt.options.size(); i++) {
         bool enum_disabled = all_disabled || config->get_enum_option_disabled(option_index, i);

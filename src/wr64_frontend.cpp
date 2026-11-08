@@ -45,6 +45,7 @@
 #include "librecomp/config.hpp"
 #include "wr64_gameplay_settings.hpp"
 #include "wr64_enhancement_controls.hpp"
+#include "wr64_librashader_presets.hpp"
 #include "hle/rt64_game_frame.h"
 #include "common/rt64_wr64_ui_filter.h"
 #include "common/rt64_wr64_far_water_distance.h"
@@ -55,6 +56,8 @@
 #include "common/rt64_wr64_rt_settings.h"
 #include "common/rt64_wr64_frame_pacing_diagnostic.h"
 #include "common/rt64_wr64_diagnostic_history.h"
+#include "common/rt64_wr64_librashader_settings.h"
+#include "render/rt64_wr64_librashader.h"
 
 // recompui/src/base/ui_launcher.cpp:27 declares
 //     extern std::vector<recomp::GameEntry> supported_games;
@@ -83,6 +86,14 @@ std::atomic_uint pending_graphics_reconfiguration{0};
 bool graphics_reconfiguration_failed = false;
 bool graphics_reconfiguration_rollback = false;
 EnhancementAvailability enhancement_controls_available{};
+std::vector<wr64::librashader::Preset> librashader_presets;
+std::filesystem::path librashader_shader_directory;
+uint64_t librashader_status_revision = ~uint64_t(0);
+constexpr const char* LibrashaderDescription =
+    "Runs the game image through a CRT shader with librashader, imitating the tube television the game was made for. "
+    "Both choices draw the image at the console's 240 lines, as the original hardware did, and the picture returns to the "
+    "window's resolution when set to Off. The selected shader compiles when the game starts and when it is picked, which can "
+    "briefly pause the picture. Menus and this overlay are never filtered.";
 
 constexpr double DefaultWaveRoundnessPercent = 50.0;
 constexpr const char *EnhancementsTabName = "Enhancements";
@@ -335,6 +346,55 @@ void updateSkyReflectionControls(recomp::config::Config& config) {
     update_enhancement_controls(config, enhancement_controls_available);
 }
 
+void applyLibrashaderPreset(uint32_t value) {
+    const auto* preset = wr64::librashader::preset_for_value(librashader_presets, value);
+    // Both CRT shaders are written for the console's 240 lines; Off returns to the unfiltered window-resolution image.
+    RT64::setWr64ShaderInput(preset == nullptr ?
+        uint32_t(RT64::Wr64ShaderInput::Internal) : uint32_t(RT64::Wr64ShaderInput::Native));
+    if (preset == nullptr) {
+        RT64::setWr64ShaderPreset({});
+        return;
+    }
+
+    const auto path = (librashader_shader_directory / wr64::librashader::utf8_path(preset->path)).u8string();
+    RT64::setWr64ShaderPreset(std::string(path.begin(), path.end()));
+}
+
+void updateLibrashaderControls(recomp::config::Config& config) {
+    using namespace wr64::librashader;
+    const auto& availability = RT64::wr64LibrashaderAvailability();
+    const uint32_t value = std::get<uint32_t>(config.get_option_value(PresetOptionId));
+    ControlState state{availability.loaded, availability.message, {}};
+    const RT64::Wr64ShaderSelection selection = RT64::getWr64ShaderSelection();
+    const RT64::Wr64ShaderStatus status = RT64::getWr64ShaderStatus();
+    if (status.failed && !selection.presetPath.empty() && status.presetGeneration == selection.presetGeneration) {
+        state.preset_error = status.message;
+    }
+
+    config.update_option_disabled(PresetOptionId, !availability.loaded);
+    const std::string details = preset_status(librashader_presets, value, state);
+    const size_t option_index = config.get_config_schema().options_by_id.at(PresetOptionId);
+    if (config.get_enum_option_details(option_index) != details) {
+        config.update_option_enum_details(PresetOptionId, details);
+    }
+
+    std::string description = LibrashaderDescription;
+    const std::string summary = preset_summary(librashader_presets, value);
+    if (!summary.empty()) {
+        description += "<br/><br/>" + escape_markup(summary);
+    }
+    if (config.get_option(option_index).description != description) {
+        config.update_option_description(PresetOptionId, description);
+    }
+}
+
+void updateLibrashaderStatus() {
+    const uint64_t revision = RT64::getWr64ShaderStatusRevision();
+    if (revision == librashader_status_revision) return;
+    librashader_status_revision = revision;
+    updateLibrashaderControls(recompui::config::get_config(EnhancementsTabId));
+}
+
 void updateReflectionBackendAvailability() {
     using Api = ultramodern::renderer::GraphicsApi;
     const unsigned int reported = active_graphics_api.load();
@@ -457,6 +517,7 @@ void process_pending_ui() {
         }
         updateGraphicsApiDetails();
         updateReflectionBackendAvailability();
+        updateLibrashaderStatus();
         if (const unsigned int rate = pending_refresh_rate.exchange(0)) {
             recompui::config::graphics::update_refresh_rate(rate);
         }
@@ -645,6 +706,30 @@ void configure() {
                     std::snprintf(details, sizeof(details), "selected=%u renderer=%u", mode, RT64::getWr64UiFilter());
                     RT64::wr64UiFilterDiagnostic("setting", details));
             });
+        {
+            using namespace wr64::librashader;
+            librashader_shader_directory = RT64::wr64ProgramDirectory() / "assets" / "shaders";
+            std::vector<std::string> shader_errors;
+            librashader_presets = load_presets(librashader_shader_directory, shader_errors);
+            for (const std::string& error : shader_errors) {
+                std::fprintf(stderr, "[librashader] %s\n", error.c_str());
+            }
+
+            std::vector<recomp::config::ConfigOptionEnumOption> preset_choices{{OffValue, "off", "Off"}};
+            for (size_t index = 0; index < librashader_presets.size(); ++index) {
+                const auto& preset = librashader_presets[index];
+                preset_choices.emplace_back(uint32_t(index + 1), preset.id, preset.label);
+            }
+
+            enhancementsConfig.add_enum_option(PresetOptionId, "CRT Shader", LibrashaderDescription,
+                preset_choices, OffValue);
+            enhancementsConfig.add_option_change_callback(PresetOptionId,
+                [](recomp::config::ConfigValueVariant value, recomp::config::ConfigValueVariant,
+                    recomp::config::OptionChangeContext) {
+                    applyLibrashaderPreset(std::get<uint32_t>(value));
+                    updateLibrashaderControls(recompui::config::get_config(EnhancementsTabId));
+                });
+        }
         enhancementsConfig.add_number_option(
             WaveRoundnessOptionId,
             "Wave Roundness",

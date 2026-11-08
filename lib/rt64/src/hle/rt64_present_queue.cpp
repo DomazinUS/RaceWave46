@@ -733,6 +733,16 @@ static constexpr int32_t Wr64PresentDrainFrames = 1;
                 RenderTexture *swapChainTexture = ext.swapChain->getTexture(swapChainIndex);
                 RenderFramebuffer *swapChainFramebuffer = swapChainFramebuffers[swapChainIndex].get();
                 RenderCommandList *commandList = ext.presentGraphicsWorker->commandList.get();
+
+                // Compiling a newly selected preset submits and waits on the queue, so
+                // it must happen before this frame's command list is opened.
+                RenderCommandQueue *presentQueue = ext.presentGraphicsWorker->commandQueue.get();
+                const bool primaryShader = (colorTarget != nullptr) && librashaderOutput.prepare(ext.device, presentQueue,
+                    ext.createdGraphicsAPI, ext.swapChain->getWidth(), ext.swapChain->getHeight(), Wr64NativeShaderHeight);
+                const bool secondaryShader = secondaryPresentFrame && displayedSeparateRace && (colorTarget != nullptr) &&
+                    secondaryLibrashaderOutput.prepare(ext.device, presentQueue, ext.createdGraphicsAPI,
+                        secondarySwapChain->getWidth(), secondarySwapChain->getHeight(), Wr64NativeShaderHeight);
+
                 commandList->begin();
                 commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(swapChainTexture, RenderTextureLayout::COLOR_WRITE));
                 
@@ -825,7 +835,23 @@ static constexpr int32_t Wr64PresentDrainFrames = 1;
                         auto secondaryParams = renderParams;
                         secondaryParams.swapChain = secondarySwapChain.get();
                         secondaryParams.outputRegion = wr64SeparatePresentRegion(2U);
-                        secondaryViRenderer->render(secondaryParams);
+                        bool secondaryShaded = false;
+                        if (secondaryShader) {
+                            auto shaderParams = secondaryParams;
+                            shaderParams.targetWidth = secondaryLibrashaderOutput.inputWidth();
+                            shaderParams.targetHeight = secondaryLibrashaderOutput.inputHeight();
+                            commandList->barriers(RenderBarrierStage::GRAPHICS,
+                                RenderTextureBarrier(secondaryLibrashaderOutput.inputTexture(), RenderTextureLayout::COLOR_WRITE));
+                            commandList->setFramebuffer(secondaryLibrashaderOutput.inputFramebuffer());
+                            commandList->clearColor();
+                            secondaryViRenderer->render(shaderParams);
+                            secondaryShaded = secondaryLibrashaderOutput.apply(commandList, texture,
+                                secondarySwapChain->getWidth(), secondarySwapChain->getHeight());
+                            commandList->setFramebuffer(secondaryFramebuffers[secondarySwapChainIndex].get());
+                        }
+                        if (!secondaryShaded) {
+                            secondaryViRenderer->render(secondaryParams);
+                        }
                     }
                     // Non-race frames deliberately leave Player 2 black. Native
                     // menus and the host UI continue only on the primary output.
@@ -833,12 +859,31 @@ static constexpr int32_t Wr64PresentDrainFrames = 1;
                         RenderTextureBarrier(texture, RenderTextureLayout::PRESENT));
                 }
                 
-                commandList->setFramebuffer(swapChainFramebuffer);
-                commandList->clearColor();
+                bool primaryShaded = false;
+                if (primaryShader && (renderParams.texture != nullptr)) {
+                    // The VI image goes to the librashader input, and the chain fills the swap chain image.
+                    auto shaderParams = renderParams;
+                    shaderParams.targetWidth = librashaderOutput.inputWidth();
+                    shaderParams.targetHeight = librashaderOutput.inputHeight();
+                    const RenderTextureBarrier shaderBarriers[] = {
+                        RenderTextureBarrier(librashaderOutput.inputTexture(), RenderTextureLayout::COLOR_WRITE),
+                        RenderTextureBarrier(renderParams.texture, RenderTextureLayout::SHADER_READ) };
+                    commandList->barriers(RenderBarrierStage::GRAPHICS, nullptr, 0, shaderBarriers, uint32_t(std::size(shaderBarriers)));
+                    commandList->setFramebuffer(librashaderOutput.inputFramebuffer());
+                    commandList->clearColor();
+                    viRenderer->render(shaderParams);
+                    primaryShaded = librashaderOutput.apply(commandList, swapChainTexture,
+                        ext.swapChain->getWidth(), ext.swapChain->getHeight());
+                }
 
-                if (renderParams.texture != nullptr) {
-                    commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(renderParams.texture, RenderTextureLayout::SHADER_READ));
-                    viRenderer->render(renderParams);
+                commandList->setFramebuffer(swapChainFramebuffer);
+                if (!primaryShaded) {
+                    commandList->clearColor();
+
+                    if (renderParams.texture != nullptr) {
+                        commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(renderParams.texture, RenderTextureLayout::SHADER_READ));
+                        viRenderer->render(renderParams);
+                    }
                 }
 
                 RenderHookDraw *drawHook = GetRenderHookDraw();
@@ -1267,5 +1312,7 @@ static constexpr int32_t Wr64PresentDrainFrames = 1;
             ext.presentGraphicsWorker->wait();
         }
         releaseSecondaryOutput();
+        librashaderOutput.release();
+        secondaryLibrashaderOutput.release();
     }
 };

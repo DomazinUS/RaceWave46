@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "https://github.com/libretro/slang-shaders",
+    "revision": "3685eda59ffd2ebe1b12cc4640581dc23552ce88"
+  },
+  "presets": [
+    {
+      "id": "crt-guest-advanced",
+      "label": "CRT",
+      "name": "CRT Guest Advanced",
+      "path": "slang/crt/crt-guest-advanced.slangp",
+      "license": "GPL-2.0-or-later",
+      "description": "Detailed CRT simulation with phosphor afterglow, bloom, halation and masks. The most demanding of the two; its first compile takes a few seconds."
+    },
+    {
+      "id": "zfast-crt",
+      "label": "Fast CRT",
+      "name": "zfast CRT",
+      "path": "slang/crt/zfast-crt.slangp",
+      "license": "GPL-2.0-or-later",
+      "description": "Lighter CRT scanlines with a fine mask. A good choice when the detailed shader costs too much frame time."
+    }
+  ]
+}

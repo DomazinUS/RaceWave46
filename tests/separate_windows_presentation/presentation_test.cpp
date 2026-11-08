@@ -4,6 +4,7 @@
 #include "common/rt64_wr64_present_region.h"
 #include "common/rt64_wr64_separate_windows.h"
 #include "shared/rt64_video_interface.h"
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cmath>
@@ -62,7 +63,7 @@ struct Simulation {
     uint32_t width=1280,height=720;
     unsigned creates=0,destroys=0,resizes=0,executes=0,waits=0,acquires=0;
     unsigned waitCount=0,signalCount=0,hooks=0,normalViewports=0;
-    std::vector<unsigned> clears,hookTargets;
+    std::vector<unsigned> clears,hookTargets,shaderTargets;
     struct Draw { unsigned target,texture; RenderViewport viewport; interop::VideoInterfaceCB constants; };
     std::vector<Draw> draws;
     std::vector<std::string> events;
@@ -104,6 +105,7 @@ struct RenderCommandList {
     void begin(){sim.events.emplace_back("begin");}
     void end(){sim.events.emplace_back("end");}
     void barriers(RenderBarrierStage,RenderTextureBarrier){}
+    void barriers(RenderBarrierStage,std::nullptr_t,unsigned,const RenderTextureBarrier*,unsigned){}
     void setFramebuffer(RenderFramebuffer*f){framebuffer=f;}
     void clearColor(){sim.clears.push_back(framebuffer->id);}
     void setViewports(RenderViewport v){viewport=v;}
@@ -163,9 +165,12 @@ struct VIRenderer {
         uint32_t downsamplingScale=1,textureWidth=0,textureHeight=0;
         UserConfiguration::Filtering filtering=UserConfiguration::Filtering::Linear;
         const VI*vi=nullptr;bool removeBlackBorders=false;Wr64PresentRegion outputRegion;
+        uint32_t targetWidth=0,targetHeight=0;
+        uint32_t outputWidth()const{return targetWidth>0?targetWidth:swapChain->getWidth();}
+        uint32_t outputHeight()const{return targetHeight>0?targetHeight:swapChain->getHeight();}
     };
     void render(const RenderParams&);
-    static void getViewportAndScissor(const RenderSwapChain*,const VI&,hlslpp::float2,uint32_t,bool,RenderViewport&v,RenderRect&s){
+    static void getViewportAndScissor(uint32_t,uint32_t,const VI&,hlslpp::float2,uint32_t,bool,RenderViewport&v,RenderRect&s){
         ++sim.normalViewports;v={10,20,300,200};s={10,20,310,220};
     }
 };
@@ -174,8 +179,21 @@ struct Inspector {void draw(RenderCommandList*){}}
 using RenderHookDraw=void(RenderCommandList*,RenderFramebuffer*);
 static void hook(RenderCommandList*,RenderFramebuffer*f){++sim.hooks;sim.hookTargets.push_back(f->id);sim.events.emplace_back("ui");}
 inline RenderHookDraw*GetRenderHookDraw(){return &hook;}
+// The librashader chain itself needs a GPU; its recording contract is faked.
+struct Wr64LibrashaderOutput {
+    RenderTexture texture;RenderFramebuffer framebuffer;bool succeed=true;
+    explicit Wr64LibrashaderOutput(unsigned id):texture{id},framebuffer{id}{}
+    RenderFramebuffer*inputFramebuffer(){return &framebuffer;}
+    RenderTexture*inputTexture(){return &texture;}
+    uint32_t inputWidth()const{return 427;}
+    uint32_t inputHeight()const{return 240;}
+    bool apply(RenderCommandList*,RenderTexture*output,uint32_t,uint32_t){
+        sim.shaderTargets.push_back(output->id);sim.events.emplace_back("shader");return succeed;
+    }
+};
 struct PresentQueue {
-    struct External {RenderDevice*device=nullptr;RenderWorker*presentGraphicsWorker=nullptr;UserConfiguration::GraphicsAPI createdGraphicsAPI=UserConfiguration::GraphicsAPI::D3D12;}ext;
+    Wr64LibrashaderOutput librashaderOutput{30},secondaryLibrashaderOutput{31};
+    struct External {RenderDevice*device=nullptr;RenderSwapChain*swapChain=nullptr;RenderWorker*presentGraphicsWorker=nullptr;UserConfiguration::GraphicsAPI createdGraphicsAPI=UserConfiguration::GraphicsAPI::D3D12;}ext;
     std::unique_ptr<VIRenderer>viRenderer=std::make_unique<VIRenderer>();
     std::unique_ptr<RenderSwapChain>secondarySwapChain;
     std::vector<std::unique_ptr<RenderFramebuffer>>secondaryFramebuffers;
@@ -274,7 +292,7 @@ static void outputRecording() {
     wr64SeparateWindowsBackend=true;wr64SecondaryWindowDrawable=true;wr64SecondaryWindowClosed=false;wr64SecondaryWindowHandle=1;
     check(q.prepareSecondaryOutput(true),"prepare fake output");
     q.drawSemaphores.emplace_back(std::make_unique<RenderCommandSemaphore>());
-    RenderSwapChain primary;primary.width=1920;primary.height=1080;
+    RenderSwapChain primary;primary.width=1920;primary.height=1080;q.ext.swapChain=&primary;
     RenderTexture source{100},swap{1};RenderFramebuffer framebuffer{1};
     VIRenderer::RenderParams params;
     params.device=&device;params.commandList=worker.commandList.get();params.texture=&source;
@@ -311,6 +329,27 @@ static void outputRecording() {
     check(sim.draws.size()==1&&sim.waitCount==1&&sim.signalCount==1,"closed secondary records only primary");
     near(sim.draws[0].constants.sourceUVScale.x,1,"fallback shows complete composite");
     near(sim.draws[0].viewport.width/sim.draws[0].viewport.height,32.0f/9.0f,"fallback composite cannot stretch");
+    // librashader: the VI image goes to each chain's input, the chain fills the
+    // window and the UI is drawn on top of the primary output without a clear.
+    sim.draws.clear();sim.clears.clear();sim.hookTargets.clear();sim.hooks=0;sim.events.clear();
+    params.outputRegion=wr64SeparatePresentRegion(1);
+    recordBothOutputs(q,worker.commandList.get(),params,true,true,0,0,&swap,&framebuffer,true,true);
+    check(sim.draws.size()==2&&sim.draws[0].target==31&&sim.draws[1].target==30,"VI draws into both shader inputs");
+    check(sim.shaderTargets==std::vector<unsigned>{20,1},"each chain writes its own window");
+    check(std::count(sim.clears.begin(),sim.clears.end(),1u)==0,"shaded primary image is not cleared");
+    check(sim.hooks==1&&sim.hookTargets[0]==1,"UI is drawn unshaded over the primary output");
+    for(auto&draw:sim.draws){
+        check(draw.viewport.x+draw.viewport.width<=427.01f&&draw.viewport.y+draw.viewport.height<=240.01f,"VI fits the native input");
+        near(draw.viewport.width/draw.viewport.height,16.0f/9.0f,"native input keeps the per-window aspect");
+    }
+    const auto shaded=std::find(sim.events.begin(),sim.events.end(),"ui")-sim.events.begin();
+    check(std::find(sim.events.begin(),sim.events.end(),"shader")-sim.events.begin()<shaded,"UI follows the shader");
+    sim.draws.clear();sim.clears.clear();sim.shaderTargets.clear();
+    q.librashaderOutput.succeed=false;q.secondaryLibrashaderOutput.succeed=false;
+    recordBothOutputs(q,worker.commandList.get(),params,true,true,0,0,&swap,&framebuffer,true,true);
+    check(sim.draws.size()==4&&sim.draws[1].target==20&&sim.draws[3].target==1,"failed chains fall back to direct VI draws");
+    check(std::count(sim.clears.begin(),sim.clears.end(),1u)==1,"fallback clears the primary output first");
+    q.librashaderOutput.succeed=true;q.secondaryLibrashaderOutput.succeed=true;
     sim.draws.clear();params.outputRegion.right=std::numeric_limits<float>::quiet_NaN();
     q.viRenderer->render(params);check(sim.draws.empty(),"invalid explicit crop cannot expose other player");
     q.releaseSecondaryOutput();

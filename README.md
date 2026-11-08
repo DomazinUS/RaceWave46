@@ -43,6 +43,7 @@ The eight race courses are Sunny Beach, Sunset Bay, Drake Lake, Marine Fortress,
 | **HUD & Menu Filtering** | Original, Light and Enhanced filtering for supported original game text and HUD textures. |
 | **Field of View** | Up to 10 extra degrees for the chase camera in one-player and two-player races. |
 | **Wave Roundness** | Adjustable rounding of rendered waves, with 50% as the default. |
+| **CRT Shader** | Renders the game image through [librashader](https://github.com/SnowflakePowered/librashader) with a CRT shader, for the look of the tube television the game was made for. **CRT** uses CRT Guest Advanced, a detailed simulation with bloom, halation and phosphor afterglow; **Fast CRT** uses zfast CRT, which is much lighter. Both draw the image at the console's 240 lines and return to the window's resolution when set to Off. Menus and the settings overlay are not filtered. Off by default. |
 | **Window modes** | Fullscreen startup, windowed play and fullscreen toggling with F11 or Alt+Enter. |
 
 ### Water, sky, shadows and visibility
@@ -70,6 +71,7 @@ The eight race courses are Sunny Beach, Sunset Bay, Drake Lake, Marine Fortress,
 | Separate player windows | Supported | Unavailable |
 | Horizontal and vertical split screen, enhanced two-player detail and Dolphin Park Free Ride | Supported | Supported |
 | Widescreen, frame interpolation, HUD filtering, Wave Roundness, draw-distance controls and extended cloud coverage | Shared implementation | Shared implementation |
+| CRT Shader, including separate player windows where available | Supported | Supported |
 
 The settings screen disables unavailable choices and explains their requirements. Availability follows the active renderer, including when Graphics API is set to Auto. Ray Traced options require **DXR 1.1 / Shader Model 6.5** support; Ray Traced shadows also require Ray Traced Water Reflections. MSAA depends on the device's supported sample counts and sample-position capabilities.
 
@@ -97,7 +99,7 @@ Separate windows requires Direct3D 12. Both windows share the primary window's r
 | **Configurable controls** | Keyboard and controller bindings, profiles, player assignment and a controller diagram showing the selected bindings. |
 | **Gameplay rumble** | A master toggle and independent strength settings for Player 1 and Player 2. |
 | **Input preferences** | Joystick deadzone and background controller-input settings. Keyboard input follows the primary window's focus. |
-| **Local progress** | Settings, imported ROM data, saves and ghosts stay in the installation's `.runtime` directory. Keep it when updating. |
+| **Local progress** | Settings, imported ROM data, saves and ghosts stay in the installation's `.runtime` directory on Windows, or in `~/.local/share/racewave46` on Linux. Keep it when updating. |
 | **Dolphin Time Trial ghost** | Added to this USA port: best-run recording and automatic saving/loading by course, difficulty and Reverse mode. A visibility setting lets you show or hide the ghost without disabling recording. |
 | **Texture packs and mods** | A Mods interface for compatible packs. Texture packs are optional and are not included in the Windows ZIP. |
 | **RetroAchievements** | Account sign-in, achievement browsing, account progress and animated softcore unlock notifications. |
@@ -120,6 +122,10 @@ The first release targets **Windows 10/11, 64-bit**. Detailed performance requir
 No game ROM, personal save, account credentials or installed texture packs are included. The release requires your own supported ROM; this project does not provide game downloads. The executable keeps its existing name even though the project is called RaceWave46.
 
 For an update, keep your `.runtime` directory. Compatible texture packs can be installed through **Settings → Mods**. RetroAchievements sign-in is available under **Settings → Achievements**.
+
+### Linux
+
+A Linux build and a Flatpak can be built from source; there is no prebuilt Linux download. See [BUILDING.md](BUILDING.md#building-racewave46-on-linux). Rendering uses Vulkan, and separate player windows (which require Direct3D 12) are not available. As on Windows, select your ROM with **Select USA ROM** in the main menu. This uses the desktop's file chooser portal, so it works on KDE, GNOME and other desktops with an xdg-desktop-portal backend.
 
 ## AI assistance
 

@@ -416,23 +416,23 @@ namespace recompui {
                         callback(true);
                         return;
                     case recomp::RomValidationError::FailedToOpen:
-                        recompui::message_box("Failed to open ROM file.");
+                        recompui::file::show_launcher_error("Failed to open ROM file.");
                         break;
                     case recomp::RomValidationError::NotARom:
-                        recompui::message_box("This is not a valid ROM file.");
+                        recompui::file::show_launcher_error("This is not a valid ROM file.");
                         break;
                     case recomp::RomValidationError::IncorrectRom:
-                        recompui::message_box("This ROM is not the correct game.");
+                        recompui::file::show_launcher_error("This ROM is not the correct game.");
                         break;
                     case recomp::RomValidationError::NotYet:
-                        recompui::message_box("This game isn't supported yet.");
+                        recompui::file::show_launcher_error("This game isn't supported yet.");
                         break;
                     case recomp::RomValidationError::IncorrectVersion:
-                        recompui::message_box(
+                        recompui::file::show_launcher_error(
                                 "This ROM is the correct game, but the wrong version.\nThis project requires the NTSC-U N64 version of the game.");
                         break;
                     case recomp::RomValidationError::OtherError:
-                        recompui::message_box("An unknown error has occurred.");
+                        recompui::file::show_launcher_error("An unknown error has occurred.");
                         break;
                 }
             }

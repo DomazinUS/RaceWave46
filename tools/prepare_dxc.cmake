@@ -1,12 +1,33 @@
 # Keep compiler, runtime library, and validator from one pinned release.
-set(WR64_DXC_TOOLCHAIN_DIRECTORY "" CACHE PATH "Optional bin/x64 directory from Microsoft DXC v1.8.2502")
+set(WR64_DXC_TOOLCHAIN_DIRECTORY "" CACHE PATH "Optional directory holding the Microsoft DXC v1.8.2502 compiler and libraries")
 
-function(wr64_check_dxc_toolchain directory result_variable)
-    set(tool_files dxc.exe dxcompiler.dll dxil.dll)
-    set(tool_hashes
+# Windows uses the x64 ZIP's bin/x64 files. Linux uses the matching x86_64
+# tarball's bin directory; that compiler finds its libraries in ../lib.
+if(CMAKE_HOST_WIN32)
+    set(WR64_DXC_TOOL_FILES dxc.exe dxcompiler.dll dxil.dll)
+    set(WR64_DXC_TOOL_HASHES
         ae4bf100b8c64ab03cdc0ee5996d5f212e96c59d6d37340359342d714ac6c004
         f79943b02f73b621421b58a569fd6ee120d0023fb6bfa23844ecad6b00d6a295
         62736e99aa534a942873f92b881a71b2cb6ad62b8d7481ea7a8ad8e9888a8056)
+    set(WR64_DXC_ARCHIVE dxc_2025_02_20.zip)
+    set(WR64_DXC_ARCHIVE_SHA256 70b1913a1bfce4a3e1a5311d16246f4ecdf3a3e613abec8aa529e57668426f85)
+    set(WR64_DXC_ARCHIVE_MEMBERS bin/x64/dxc.exe bin/x64/dxcompiler.dll bin/x64/dxil.dll)
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+    set(WR64_DXC_TOOL_FILES dxc ../lib/libdxcompiler.so ../lib/libdxil.so)
+    set(WR64_DXC_TOOL_HASHES
+        0e8f751328f3526b0339b0a52e51b3b2bdb0d07bf41b6d66b1e14d0150c53a0b
+        92b8cdba6ee3bd0d3db0bd4c52e37d344ea939fa8675de5eaa5382aabc486311
+        f1bb6a779319d7b7d331fab284ca7fd4e0f08e6bd573fc708c72ee64004e4b86)
+    set(WR64_DXC_ARCHIVE linux_dxc_2025_02_20.x86_64.tar.gz)
+    set(WR64_DXC_ARCHIVE_SHA256 e0580d90dbf6053a783ddd8d5153285f0606e5deaad17a7a6452f03acdf88c71)
+    set(WR64_DXC_ARCHIVE_MEMBERS ./bin/dxc ./lib/libdxcompiler.so ./lib/libdxil.so)
+else()
+    message(FATAL_ERROR "No pinned DXC v1.8.2502 toolchain is defined for this build host.")
+endif()
+
+function(wr64_check_dxc_toolchain directory result_variable)
+    set(tool_files ${WR64_DXC_TOOL_FILES})
+    set(tool_hashes ${WR64_DXC_TOOL_HASHES})
     foreach(index RANGE 0 2)
         list(GET tool_files ${index} tool_file)
         list(GET tool_hashes ${index} expected_hash)
@@ -26,12 +47,16 @@ endfunction()
 function(wr64_prepare_dxc output_variable)
     # A versioned compiler path also invalidates cached shader build commands.
     set(toolset "${CMAKE_BINARY_DIR}/_deps/wr64-dxc-1.8.2502")
-    set(archive_sha256 "70b1913a1bfce4a3e1a5311d16246f4ecdf3a3e613abec8aa529e57668426f85")
-    set(download "${CMAKE_BINARY_DIR}/_deps/dxc_2025_02_20.zip")
+    if(NOT CMAKE_HOST_WIN32)
+        set(toolset "${toolset}/bin")
+    endif()
+    set(archive_sha256 "${WR64_DXC_ARCHIVE_SHA256}")
+    set(download "${CMAKE_BINARY_DIR}/_deps/${WR64_DXC_ARCHIVE}")
     if(WR64_DXC_TOOLCHAIN_DIRECTORY)
         wr64_check_dxc_toolchain("${WR64_DXC_TOOLCHAIN_DIRECTORY}" supplied_valid)
         if(NOT supplied_valid)
-            message(FATAL_ERROR "WR64_DXC_TOOLCHAIN_DIRECTORY must contain the exact x64 dxc.exe, dxcompiler.dll, and dxil.dll from Microsoft DXC v1.8.2502.")
+            string(REPLACE ";" ", " expected_files "${WR64_DXC_TOOL_FILES}")
+            message(FATAL_ERROR "WR64_DXC_TOOLCHAIN_DIRECTORY must contain the exact x64 ${expected_files} from Microsoft DXC v1.8.2502.")
         endif()
         set(source_bin "${WR64_DXC_TOOLCHAIN_DIRECTORY}")
     else()
@@ -47,7 +72,7 @@ function(wr64_prepare_dxc output_variable)
             file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/_deps")
             message(STATUS "Acquiring pinned Microsoft DXC v1.8.2502 toolchain")
             file(DOWNLOAD
-                "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.8.2502/dxc_2025_02_20.zip"
+                "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.8.2502/${WR64_DXC_ARCHIVE}"
                 "${download}" EXPECTED_HASH "SHA256=${archive_sha256}" TLS_VERIFY ON
                 TIMEOUT 300 INACTIVITY_TIMEOUT 30 STATUS download_status)
             list(GET download_status 0 download_code)
@@ -57,16 +82,27 @@ function(wr64_prepare_dxc output_variable)
         endif()
         set(extracted "${CMAKE_BINARY_DIR}/_deps/wr64-dxc-1.8.2502-extracted")
         file(ARCHIVE_EXTRACT INPUT "${download}" DESTINATION "${extracted}"
-            PATTERNS "bin/x64/dxc.exe" "bin/x64/dxcompiler.dll" "bin/x64/dxil.dll")
-        set(source_bin "${extracted}/bin/x64")
+            PATTERNS ${WR64_DXC_ARCHIVE_MEMBERS})
+        if(CMAKE_HOST_WIN32)
+            set(source_bin "${extracted}/bin/x64")
+        else()
+            set(source_bin "${extracted}/bin")
+        endif()
         wr64_check_dxc_toolchain("${source_bin}" extracted_valid)
         if(NOT extracted_valid)
             message(FATAL_ERROR "The pinned DXC toolchain has unexpected file hashes.")
         endif()
     endif()
     file(MAKE_DIRECTORY "${toolset}")
-    foreach(tool_file dxc.exe dxcompiler.dll dxil.dll)
-        configure_file("${source_bin}/${tool_file}" "${toolset}/${tool_file}" COPYONLY)
+    foreach(tool_file IN LISTS WR64_DXC_TOOL_FILES)
+        if(CMAKE_HOST_WIN32)
+            configure_file("${source_bin}/${tool_file}" "${toolset}/${tool_file}" COPYONLY)
+        else()
+            get_filename_component(tool_directory "${toolset}/${tool_file}" DIRECTORY)
+            file(MAKE_DIRECTORY "${tool_directory}")
+            file(COPY "${source_bin}/${tool_file}" DESTINATION "${tool_directory}"
+                FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+        endif()
     endforeach()
     set(${output_variable} "${toolset}" PARENT_SCOPE)
 endfunction()

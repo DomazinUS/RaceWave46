@@ -111,10 +111,55 @@
     "third_party_notices": "lib/rt64/src/contrib/dxc/validator-1.8.2502/ThirdPartyNotices.txt",
     "notice": "The matched compiler, runtime library and validator are acquired together and checked individually. They build Direct3D and default SPIR-V shaders; selected framebuffer and Wave Race SPIR-V shaders continue to use the separate pinned Vulkan compiler. No 1.8.2502 tool binary is included in this source archive."
   },
+  "external_dxc_toolchain_linux": {
+    "source_url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.8.2502/linux_dxc_2025_02_20.x86_64.tar.gz",
+    "archive_sha256": "e0580d90dbf6053a783ddd8d5153285f0606e5deaad17a7a6452f03acdf88c71",
+    "version": "1.8.2502",
+    "files": [
+      {
+        "archive_entry": "bin/dxc",
+        "file_sha256": "0e8f751328f3526b0339b0a52e51b3b2bdb0d07bf41b6d66b1e14d0150c53a0b"
+      },
+      {
+        "archive_entry": "lib/libdxcompiler.so",
+        "file_sha256": "92b8cdba6ee3bd0d3db0bd4c52e37d344ea939fa8675de5eaa5382aabc486311"
+      },
+      {
+        "archive_entry": "lib/libdxil.so",
+        "file_sha256": "f1bb6a779319d7b7d331fab284ca7fd4e0f08e6bd573fc708c72ee64004e4b86"
+      }
+    ],
+    "license": "University of Illinois/NCSA (LICENSE-LLVM.txt), as assigned by the archive's ReleaseNotes.md license table.",
+    "notice": "The Linux counterpart of external_dxc_toolchain, acquired by tools/prepare_dxc.cmake or supplied by the Flatpak manifest. The compiler loads its libraries through its $ORIGIN/../lib runpath, so the archive's bin and lib layout is kept. No tool binary is included in this source archive."
+  },
   "external_vulkan_compiler": {
     "version": "1.9.2607",
     "windows_archive_url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2607/dxc_2026_07_29.zip",
     "windows_archive_sha256": "a1dfb116ba3eeae6a1582291b53a8e7bf65ad760676bd3194685c8f7367cd241",
+    "linux_archive_url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2607/linux_dxc_2026_07_29.x86_x64.tar.gz",
+    "linux_archive_sha256": "55665c87824051ed4774ff3280a79ccbbb7d39243b9736ca5e98222134112d54",
     "scope": "Selected native framebuffer and Wave Race reflection/shadow SPIR-V shaders; the ordinary SPIR-V shaders use the matched 1.8.2502 toolchain."
+  },
+  "external_librashader": {
+    "version": "0.12.0",
+    "c_abi_version": 2,
+    "c_api_version": 5,
+    "upstream_url": "https://github.com/SnowflakePowered/librashader",
+    "header": "lib/librashader/include/librashader.h",
+    "header_source": "include/librashader.h at tag librashader-v0.12.0, unmodified",
+    "windows_archive_url": "https://github.com/SnowflakePowered/librashader/releases/download/librashader-v0.12.0/librashader-x86_64-windows-v0.12.0-optimized.zip",
+    "windows_archive_sha256": "521fe0f364bfa705883f9e99fb1733a3a24f0f403bcc5591b6b78f6cff289183",
+    "windows_dll_sha256": "1890f647c7fbe52d4cc591526db24367caca284996855c4565c6003c7e46f8cc",
+    "source_archive_url": "https://github.com/SnowflakePowered/librashader/archive/refs/tags/librashader-v0.12.0.tar.gz",
+    "source_archive_sha256": "4bf8cf2489d00848dcabbf2163204093776082da4217d5a5db45e4cbf335cedf",
+    "linux_build": "tools/build_librashader.sh and the Flatpak manifest build librashader-capi with --no-default-features --features runtime-vulkan; Flatpak dependencies are pinned by packaging/linux/flatpak/librashader-cargo-sources.json.",
+    "license": "Runtime: MPL-2.0. C API header: MIT.",
+    "notice": "Acquired by tools/prepare_librashader.cmake (Windows) or built from the pinned source archive (Linux), then copied beside the executable. The game loads it at run time; no runtime binary is included in this source archive."
+  },
+  "slang_shaders": {
+    "upstream_url": "https://github.com/libretro/slang-shaders",
+    "revision": "3685eda59ffd2ebe1b12cc4640581dc23552ce88",
+    "path": "assets/shaders/slang",
+    "notice": "Unmodified curated subset; per-preset authors and licenses are listed in assets/shaders/README.md."
   }
 }

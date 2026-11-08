@@ -18,6 +18,12 @@
 #include <windows.h>
 #include <wincrypt.h>
 #include <winhttp.h>
+#elif defined(__linux__)
+#include <cctype>
+#include <memory>
+#include <mutex>
+#include <curl/curl.h>
+#include <libsecret/secret.h>
 #endif
 
 namespace wr64::achievements::platform {
@@ -72,6 +78,62 @@ void append_size(std::string& output, std::size_t value) {
 std::uint32_t read_size(const unsigned char* bytes) {
     return std::uint32_t(bytes[0]) | (std::uint32_t(bytes[1]) << 8) |
         (std::uint32_t(bytes[2]) << 16) | (std::uint32_t(bytes[3]) << 24);
+}
+#elif defined(__linux__)
+struct CurlDeleter { void operator()(CURL* handle) const { curl_easy_cleanup(handle); } };
+struct CurlUrlDeleter { void operator()(CURLU* handle) const { curl_url_cleanup(handle); } };
+struct CurlListDeleter { void operator()(curl_slist* list) const { curl_slist_free_all(list); } };
+struct CurlString {
+    char* value = nullptr;
+    ~CurlString() { curl_free(value); }
+};
+void initialize_curl() {
+    static std::once_flag once;
+    std::call_once(once, [] { curl_global_init(CURL_GLOBAL_DEFAULT); });
+}
+std::size_t receive_body(char* data, std::size_t size, std::size_t count, void* user) {
+    auto& body = *static_cast<std::string*>(user);
+    const std::size_t bytes = size * count;
+    if (bytes > response_limit - body.size()) return 0;
+    body.append(data, bytes);
+    return bytes;
+}
+// WinHTTP rejects these through its UTF-16 conversion; curl would send the
+// bytes unchanged, so reject malformed UTF-8 explicitly.
+bool valid_utf8(std::string_view value) {
+    for (std::size_t i = 0; i < value.size();) {
+        const auto lead = static_cast<unsigned char>(value[i]);
+        const std::size_t length = lead < 0x80 ? 1 : (lead >> 5) == 6 ? 2 : (lead >> 4) == 14 ? 3 : (lead >> 3) == 30 ? 4 : 0;
+        if (length == 0 || length > value.size() - i) return false;
+        std::uint32_t code = length == 1 ? lead : lead & (0x7F >> length);
+        for (std::size_t j = 1; j < length; ++j) {
+            const auto next = static_cast<unsigned char>(value[i + j]);
+            if ((next & 0xC0) != 0x80) return false;
+            code = (code << 6) | (next & 0x3F);
+        }
+        constexpr std::uint32_t minimum[] = {0, 0, 0x80, 0x800, 0x10000};
+        if (code < minimum[length] || code > 0x10FFFF || (code >= 0xD800 && code <= 0xDFFF)) return false;
+        i += length;
+    }
+    return true;
+}
+bool equal_ignoring_case(std::string_view left, std::string_view right) {
+    return left.size() == right.size() && std::equal(left.begin(), left.end(), right.begin(),
+        [](unsigned char a, unsigned char b) { return std::tolower(a) == std::tolower(b); });
+}
+// The login is kept in the desktop keyring (the Secret portal inside Flatpak),
+// keyed by the profile directory so separate --runtime-dir profiles stay apart.
+const SecretSchema* credential_schema() {
+    static const SecretSchema schema = {
+        "RaceWave46.RetroAchievements", SECRET_SCHEMA_NONE,
+        {{"profile", SECRET_SCHEMA_ATTRIBUTE_STRING}, {nullptr, SECRET_SCHEMA_ATTRIBUTE_STRING}},
+    };
+    return &schema;
+}
+std::string profile_key(const std::filesystem::path& directory) {
+    std::error_code error;
+    const auto absolute = std::filesystem::weakly_canonical(directory, error);
+    return (error ? directory : absolute).string();
 }
 #endif
 }
@@ -142,6 +204,63 @@ HttpResponse http_request(const std::string& url, const std::string& post,
             return {-1, "The achievement service response exceeds its size limit."};
         response.body.append(buffer.data(), received);
     }
+#elif defined(__linux__)
+    // Same policy as the WinHTTP path: official HTTPS origin only, no URL
+    // credentials, cookies, authentication or redirects.
+    if (!plain_field(url, 8192) || url.find('#') != std::string::npos ||
+        !plain_field(user_agent, 512) || !plain_field(content_type, 128, true) || post.size() > 1024 * 1024 ||
+        !valid_utf8(url) || !valid_utf8(user_agent) || !valid_utf8(content_type))
+        return {-1, "Invalid achievement service request."};
+    initialize_curl();
+    std::unique_ptr<CURLU, CurlUrlDeleter> parsed(curl_url());
+    if (!parsed || curl_url_set(parsed.get(), CURLUPART_URL, url.c_str(), 0) != CURLUE_OK)
+        return {-1, "Invalid achievement service URL or header."};
+    CurlString scheme, host, port, user, password;
+    curl_url_get(parsed.get(), CURLUPART_SCHEME, &scheme.value, 0);
+    curl_url_get(parsed.get(), CURLUPART_HOST, &host.value, 0);
+    curl_url_get(parsed.get(), CURLUPART_PORT, &port.value, 0);
+    curl_url_get(parsed.get(), CURLUPART_USER, &user.value, 0);
+    curl_url_get(parsed.get(), CURLUPART_PASSWORD, &password.value, 0);
+    if (!scheme.value || std::string_view(scheme.value) != "https" || !host.value ||
+        !equal_ignoring_case(host.value, "retroachievements.org") ||
+        (port.value && std::string_view(port.value) != "443") || user.value || password.value)
+        return {-1, "Only the official HTTPS achievement service is supported."};
+    std::unique_ptr<CURL, CurlDeleter> request(curl_easy_init());
+    if (!request) return {-2, "Unable to initialize the achievement connection."};
+    CURL* handle = request.get();
+    std::unique_ptr<curl_slist, CurlListDeleter> headers;
+    if (!post.empty()) {
+        const std::string header = "Content-Type: " +
+            (content_type.empty() ? std::string("application/x-www-form-urlencoded") : content_type);
+        headers.reset(curl_slist_append(nullptr, header.c_str()));
+        if (!headers) return {-2, "Unable to create the achievement request."};
+    }
+    HttpResponse response{0, {}};
+    const bool configured =
+        curl_easy_setopt(handle, CURLOPT_CURLU, parsed.get()) == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_PROTOCOLS_STR, "https") == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 0L) == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L) == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT_MS, 10000L) == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_TIMEOUT_MS, 45000L) == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_USERAGENT, user_agent.c_str()) == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, receive_body) == CURLE_OK &&
+        curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response.body) == CURLE_OK &&
+        (post.empty() || (
+            curl_easy_setopt(handle, CURLOPT_POST, 1L) == CURLE_OK &&
+            curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE_LARGE, curl_off_t(post.size())) == CURLE_OK &&
+            curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post.data()) == CURLE_OK &&
+            curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers.get()) == CURLE_OK));
+    if (!configured) return {-1, "Unable to enforce achievement connection policy."};
+    const CURLcode result = curl_easy_perform(handle);
+    if (result == CURLE_WRITE_ERROR) return {-1, "The achievement service response exceeds its size limit."};
+    if (result == CURLE_OPERATION_TIMEDOUT) return {-2, "The achievement service connection failed or timed out."};
+    if (result != CURLE_OK) return {-2, "The achievement service connection failed or timed out."};
+    long status = 0;
+    if (curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &status) != CURLE_OK || status <= 0)
+        return {-2, "The achievement service returned an invalid response."};
+    response.status = int(status);
+    return response;
 #else
     (void)url; (void)post; (void)content_type; (void)user_agent;
     return {-1, "Achievement networking is unavailable on this platform."};
@@ -177,6 +296,18 @@ bool save_credentials(const std::filesystem::path& directory, const Credentials&
     const bool saved = complete && MoveFileExW(temporary.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
     if (!saved) DeleteFileW(temporary.c_str());
     return saved;
+#elif defined(__linux__)
+    if (directory.empty() || !plain_field(credentials.username, 256) || !plain_field(credentials.token, 8192)) return false;
+    // Both fields exclude control characters, so a newline separates them.
+    SensitiveString secret;
+    secret.value = credentials.username + "\n" + credentials.token;
+    const std::string profile = profile_key(directory);
+    GError* error = nullptr;
+    const gboolean stored = secret_password_store_sync(credential_schema(), SECRET_COLLECTION_DEFAULT,
+        "Wave Race 64 RetroAchievements login", secret.value.c_str(), nullptr, &error,
+        "profile", profile.c_str(), nullptr);
+    if (error) g_error_free(error);
+    return stored != FALSE;
 #else
     (void)directory; (void)credentials; return false;
 #endif
@@ -211,6 +342,24 @@ std::optional<Credentials> load_credentials(const std::filesystem::path& directo
         erase_secret(credentials.token); return {};
     }
     return credentials;
+#elif defined(__linux__)
+    if (directory.empty()) return {};
+    const std::string profile = profile_key(directory);
+    GError* error = nullptr;
+    gchar* stored = secret_password_lookup_sync(credential_schema(), nullptr, &error,
+        "profile", profile.c_str(), nullptr);
+    if (error) g_error_free(error);
+    if (!stored) return {};
+    SensitiveString secret;
+    secret.value.assign(stored);
+    secret_password_free(stored);
+    const auto separator = secret.value.find('\n');
+    if (separator == std::string::npos) return {};
+    Credentials credentials{secret.value.substr(0, separator), secret.value.substr(separator + 1)};
+    if (!plain_field(credentials.username, 256) || !plain_field(credentials.token, 8192)) {
+        erase_secret(credentials.token); return {};
+    }
+    return credentials;
 #else
     (void)directory; return {};
 #endif
@@ -218,6 +367,12 @@ std::optional<Credentials> load_credentials(const std::filesystem::path& directo
 
 void remove_credentials(const std::filesystem::path& directory) {
     if (directory.empty()) return;
+#if defined(__linux__)
+    const std::string profile = profile_key(directory);
+    GError* error = nullptr;
+    secret_password_clear_sync(credential_schema(), nullptr, &error, "profile", profile.c_str(), nullptr);
+    if (error) g_error_free(error);
+#endif
     std::error_code ignored;
     std::filesystem::remove(directory / credential_filename, ignored);
 }

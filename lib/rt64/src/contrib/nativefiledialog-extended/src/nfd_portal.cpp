@@ -1360,7 +1360,12 @@ nfdresult_t NFD_Init(void) {
     return NFD_OKAY;
 }
 void NFD_Quit(void) {
-    dbus_connection_unref(dbus_conn);
+    // NFD_Init leaves dbus_conn null when there is no session bus, and libdbus
+    // aborts on a null unref.
+    if (dbus_conn) {
+        dbus_connection_unref(dbus_conn);
+        dbus_conn = nullptr;
+    }
     // Note: We do not free dbus_error since NFD_Init might set it.
     // To avoid leaking memory, the caller should explicitly call NFD_ClearError after reading the
     // error.

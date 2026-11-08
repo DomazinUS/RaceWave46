@@ -1,6 +1,7 @@
 #include "wr64_editions.hpp"
 
 #include <charconv>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -48,9 +49,29 @@ Options parse_process_options(int argc, char** argv) {
     // A direct EXE launch and a shortcut must use the same portable profile,
     // regardless of the caller's working directory. Explicit CLI paths still
     // resolve from that directory, so existing diagnostic launches retain it.
-    return parse_options(count, arguments.data(), executable_path().parent_path() / ".runtime");
+    return parse_options(count, arguments.data(), default_runtime_directory());
 #else
-    return parse_options(argc, argv);
+    return parse_options(argc, argv, default_runtime_directory());
+#endif
+}
+
+std::filesystem::path default_runtime_directory() {
+#ifdef _WIN32
+    return executable_path().parent_path() / ".runtime";
+#elif defined(__linux__)
+    // Inside Flatpak XDG_DATA_HOME is the application's private data
+    // directory (~/.var/app/<id>/data).
+    const char* data_home = std::getenv("XDG_DATA_HOME");
+    if (data_home != nullptr && data_home[0] == '/') {
+        return std::filesystem::u8path(data_home) / "racewave46";
+    }
+    const char* home = std::getenv("HOME");
+    if (home != nullptr && home[0] == '/') {
+        return std::filesystem::u8path(home) / ".local" / "share" / "racewave46";
+    }
+    return {};
+#else
+    return {};
 #endif
 }
 

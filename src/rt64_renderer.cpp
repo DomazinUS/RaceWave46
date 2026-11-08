@@ -178,7 +178,12 @@ public:
         supported_sample_counts = 1;
         last_display_refresh_rate = 0;
         RT64::Application::Core core{};
+#if defined(_WIN32)
         core.window = window_handle.window;
+#else
+        // ultramodern's Linux WindowHandle is the SDL window itself.
+        core.window = window_handle;
+#endif
         core.checkInterrupts = check_interrupts;
         core.HEADER = dummy_rom_header;
         core.RDRAM = rdram;
@@ -244,7 +249,12 @@ public:
         // claiming, the forensic recording and the layer traces.
         recompui::set_render_hooks();
 #endif
-        setup_result = map_setup_result(app->setup(window_handle.thread_id));
+#if defined(_WIN32)
+        const uint32_t window_thread_id = window_handle.thread_id;
+#else
+        const uint32_t window_thread_id = 0;
+#endif
+        setup_result = map_setup_result(app->setup(window_thread_id));
         chosen_api = map_graphics_api(app->chosenGraphicsAPI);
         RT64::wr64SeparateWindowsBackend.store(setup_result == ultramodern::renderer::SetupResult::Success &&
             app->chosenGraphicsAPI == RT64::UserConfiguration::GraphicsAPI::D3D12, std::memory_order_release);

@@ -20,14 +20,19 @@
 #include <mutex>
 #include <vector>
 
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <Xinput.h>
+#endif
 
 #include <SDL.h>
 
 namespace {
 
+// SDL audio below is shared by every host. The keyboard/XInput fallback is
+// Windows-only; other hosts always use recompinput.
+#if defined(_WIN32) && !defined(WR64_ENABLE_FRONTEND)
 constexpr uint16_t kButtonA = 0x8000;
 constexpr uint16_t kButtonB = 0x4000;
 constexpr uint16_t kButtonZ = 0x2000;
@@ -63,6 +68,7 @@ struct InputState {
     std::array<XINPUT_STATE, XUSER_MAX_COUNT> controllers{};
     std::array<bool, XUSER_MAX_COUNT> connected{};
 } input_state;
+#endif
 
 // Audio delivery uses a stateful resampler and a lock-free producer/consumer ring.
 // Preserve resampler history across blocks and repeated same-rate requests; drain
@@ -475,7 +481,7 @@ void set_frequency(uint32_t frequency) {
 //
 // This one is XInput-only, which is why the 8BitDo N64 Modkit over Bluetooth
 // was invisible to it no matter how many controllers were connected.
-#ifndef WR64_ENABLE_FRONTEND
+#if defined(_WIN32) && !defined(WR64_ENABLE_FRONTEND)
 
 namespace wr64::input {
 
@@ -588,6 +594,6 @@ ultramodern::input::connected_device_info_t get_connected_device_info(
 
 } // namespace wr64::input
 
-#endif // !WR64_ENABLE_FRONTEND
+#endif // _WIN32 && !WR64_ENABLE_FRONTEND
 
 #endif

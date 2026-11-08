@@ -35,11 +35,18 @@ namespace RT64 {
             const VI *vi = nullptr;
             bool removeBlackBorders = false;
             Wr64PresentRegion outputRegion;
+            // Size of the bound render target when it is not the swap chain (librashader input).
+            uint32_t targetWidth = 0;
+            uint32_t targetHeight = 0;
+
+            uint32_t outputWidth() const { return (targetWidth > 0) ? targetWidth : swapChain->getWidth(); }
+            uint32_t outputHeight() const { return (targetHeight > 0) ? targetHeight : swapChain->getHeight(); }
         };
 
         VIRenderer();
         ~VIRenderer();
         void render(const RenderParams &p);
         static void getViewportAndScissor(const RenderSwapChain *swapChain, const VI &vi, hlslpp::float2 resolutionScale, uint32_t downsamplingScale, bool removeBlackBorders, RenderViewport &viewport, RenderRect &scissor);
+        static void getViewportAndScissor(uint32_t windowWidth, uint32_t windowHeight, const VI &vi, hlslpp::float2 resolutionScale, uint32_t downsamplingScale, bool removeBlackBorders, RenderViewport &viewport, RenderRect &scissor);
     };
 };

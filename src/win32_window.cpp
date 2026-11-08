@@ -306,6 +306,39 @@ LRESULT CALLBACK window_proc(HWND handle, UINT message, WPARAM wparam, LPARAM lp
 #endif
     return DefWindowProcW(handle, message, wparam, lparam);
 }
+#elif defined(WR64_ENABLE_RT64)
+// Other hosts have no window procedure to subclass. An event watch sees each
+// key as SDL queues it and leaves the event in place for recompinput, which
+// owns SDL_PollEvent. It runs on the thread pumping events, which is the
+// window thread.
+int SDLCALL shortcut_watch(void*, SDL_Event* event) {
+    if ((event->type != SDL_KEYDOWN) || event->key.repeat) {
+        return 0;
+    }
+    const SDL_Keycode key = event->key.keysym.sym;
+    const bool alt = (event->key.keysym.mod & KMOD_ALT) != 0;
+    if ((key == SDLK_F11) || (alt && (key == SDLK_RETURN))) {
+#ifdef WR64_ENABLE_FRONTEND
+        // recompinput toggles fullscreen for these keys itself once the UI is
+        // up. On Windows the subclass consumes them before SDL sees them;
+        // here SDL delivers them to recompinput too, so toggling here as well
+        // would switch twice and land back where it started.
+        if (wr64::frontend::ready()) {
+            return 0;
+        }
+#endif
+        if (::window != nullptr) {
+            const bool fullscreen = (SDL_GetWindowFlags(::window) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+            SDL_SetWindowFullscreen(::window, fullscreen ? 0u : static_cast<Uint32>(SDL_WINDOW_FULLSCREEN_DESKTOP));
+        }
+    }
+#ifdef WR64_ENABLE_FRONTEND
+    else if ((key == SDLK_F1) && !ultramodern::renderer::get_graphics_config().developer_mode) {
+        wr64::frontend::toggle_settings();
+    }
+#endif
+    return 0;
+}
 #endif
 
 } // namespace
@@ -465,6 +498,43 @@ ultramodern::renderer::WindowHandle create_window(
 #else
     return reinterpret_cast<ultramodern::renderer::WindowHandle>(state->handle);
 #endif
+#elif defined(WR64_ENABLE_RT64)
+    // Linux: RT64 renders through Vulkan straight into the SDL window, and
+    // ultramodern's window handle is that SDL_Window.
+    (void)data;
+    if (!enabled) {
+        return nullptr;
+    }
+    SDL_SetMainReady();
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        std::fprintf(stderr, "[window] SDL_Init(SDL_INIT_VIDEO) failed: %s\n", SDL_GetError());
+        return nullptr;
+    }
+    const float requested_aspect = wr64_experimental_3d_aspect();
+    const int client_width = (requested_aspect > 2.0f) ? 1260 : 1280;
+    const int client_height = (requested_aspect > 0.0f)
+        ? static_cast<int>(std::lround(client_width / requested_aspect))
+        : 720;
+    Uint32 window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN;
+#ifdef WR64_ENABLE_FRONTEND
+    if (ultramodern::renderer::get_graphics_config().wm_option ==
+            ultramodern::renderer::WindowMode::Fullscreen) {
+        window_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    }
+#endif
+    ::window = SDL_CreateWindow(
+        "Wave Race 64: Recompiled",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        client_width,
+        client_height,
+        window_flags);
+    if (::window == nullptr) {
+        std::fprintf(stderr, "[window] SDL_CreateWindow failed: %s\n", SDL_GetError());
+        return nullptr;
+    }
+    SDL_AddEventWatch(shortcut_watch, nullptr);
+    return ::window;
 #else
     (void)data;
     return reinterpret_cast<ultramodern::renderer::WindowHandle>(1);
@@ -540,6 +610,24 @@ void update_gfx(ultramodern::gfx_callbacks_t::gfx_data_t data) {
         InvalidateRect(state->handle, nullptr, FALSE);
 #endif
     }
+#elif defined(WR64_ENABLE_RT64)
+    (void)data;
+#ifdef WR64_ENABLE_FRONTEND
+    // Same order as the Windows path: recompinput owns SDL_PollEvent through
+    // wr64::frontend::pump().
+    wr64_controller_smoke_update();
+    wr64::frontend::pump();
+    if (recompinput::game_input_disabled()) wr64_game_rumble_reset();
+    wr64_game_rumble_update();
+    wr64::input::update_rumble();
+#else
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+            ultramodern::quit();
+        }
+    }
+#endif
 #else
     (void)data;
 #endif

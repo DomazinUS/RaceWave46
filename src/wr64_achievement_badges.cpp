@@ -23,6 +23,10 @@
 #endif
 #include <windows.h>
 #include <winhttp.h>
+#elif defined(__linux__)
+#include <memory>
+#include <curl/curl.h>
+#include <unistd.h>
 #endif
 
 namespace wr64::achievement_badges {
@@ -152,6 +156,8 @@ void save_cached(const std::filesystem::path& path, const std::vector<char>& byt
     auto temporary = path;
 #ifdef _WIN32
     temporary += "." + std::to_string(GetCurrentProcessId()) + ".tmp";
+#elif defined(__linux__)
+    temporary += "." + std::to_string(getpid()) + ".tmp";
 #else
     temporary += ".tmp";
 #endif
@@ -285,6 +291,59 @@ struct Downloader {
             result.insert(result.end(), request.read_buffer.data(), request.read_buffer.data() + count);
         }
         return {};
+    }
+};
+#elif defined(__linux__)
+struct Transfer {
+    std::vector<char> bytes;
+    const std::atomic<bool>* stopping = nullptr;
+};
+
+std::size_t receive_image(char* data, std::size_t size, std::size_t count, void* user) {
+    auto& transfer = *static_cast<Transfer*>(user);
+    const std::size_t bytes = size * count;
+    if (bytes > image_limit - transfer.bytes.size()) return 0;
+    transfer.bytes.insert(transfer.bytes.end(), data, data + bytes);
+    return bytes;
+}
+
+int transfer_progress(void* user, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
+    // A nonzero return aborts the transfer, so shutdown never waits for it.
+    return static_cast<Transfer*>(user)->stopping->load() ? 1 : 0;
+}
+
+struct Downloader {
+    struct Deleter { void operator()(CURL* handle) const { curl_easy_cleanup(handle); } };
+    std::unique_ptr<CURL, Deleter> handle;
+    Downloader() {
+        if (curl_global_init(CURL_GLOBAL_DEFAULT) == CURLE_OK) handle.reset(curl_easy_init());
+    }
+    std::vector<char> fetch(const Task& task, const std::atomic<bool>& stopping) {
+        if (!handle || stopping.load()) return {};
+        CURL* request = handle.get();
+        curl_easy_reset(request);
+        // Matches the pinned official rc_api_init_fetch_image_request builder.
+        // The caller supplies only an already validated numeric image name.
+        const std::string url = "https://media.retroachievements.org/Badge/" + task.filename();
+        Transfer transfer;
+        transfer.stopping = &stopping;
+        if (curl_easy_setopt(request, CURLOPT_URL, url.c_str()) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_PROTOCOLS_STR, "https") != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_FOLLOWLOCATION, 0L) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_NOSIGNAL, 1L) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_CONNECTTIMEOUT_MS, 2000L) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_TIMEOUT_MS, 8000L) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_MAXFILESIZE_LARGE, curl_off_t(image_limit)) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_USERAGENT, "WaveRace64Recompiled/1.0 RetroAchievementsBadges") != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_WRITEFUNCTION, receive_image) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_WRITEDATA, &transfer) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_XFERINFOFUNCTION, transfer_progress) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_XFERINFODATA, &transfer) != CURLE_OK ||
+            curl_easy_setopt(request, CURLOPT_NOPROGRESS, 0L) != CURLE_OK) return {};
+        if (curl_easy_perform(request) != CURLE_OK) return {};
+        long status = 0;
+        if (curl_easy_getinfo(request, CURLINFO_RESPONSE_CODE, &status) != CURLE_OK || status != 200) return {};
+        return valid_png(transfer.bytes) ? std::move(transfer.bytes) : std::vector<char>{};
     }
 };
 #else
