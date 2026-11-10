@@ -94,7 +94,7 @@ static float smoothstep(float from, float to, float amount) {
 
 // Update rumble to attempt to mimic the way n64 rumble ramps up and falls off
 void recompinput::update_rumble() {
-    auto do_rumble = [](SDL_GameController* controller, uint16_t rumble_strength, uint32_t duration) {
+    auto do_rumble = [](SDL_GameController* controller, uint16_t rumble_strength, uint16_t full_scale, uint32_t duration) {
         if (controller == nullptr || !SDL_GameControllerGetAttached(controller)) return;
         SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
         SDL_JoystickID joystick_id = SDL_JoystickInstanceID(joystick);
@@ -106,7 +106,7 @@ void recompinput::update_rumble() {
         }
         const uint64_t now_ms = uint64_t(std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count());
-        rumble_strength = state.rumble_limiter.next(rumble_strength, now_ms);
+        rumble_strength = state.rumble_limiter.next(rumble_strength, full_scale, now_ms);
         if (rumble_strength == 0) duration = 0;
         // SDL maps DualSense low/high output to its left/right actuators.
         // Send the existing mono N64 envelope to both; retain the established
@@ -142,7 +142,8 @@ void recompinput::update_rumble() {
         }
         float smooth_rumble = smoothstep(0, 1, InputState.cur_rumble[i]);
 
-        uint16_t rumble_strength = smooth_rumble * (recompui::config::general::get_rumble_strength(i) * 0xFFFF / 100);
+        const uint16_t full_scale = uint16_t(recompui::config::general::get_rumble_strength(i) * 0xFFFF / 100);
+        uint16_t rumble_strength = smooth_rumble * full_scale;
         // Renew active output on every host update, including unchanged levels.
         // SDL's input pump expires an unrefreshed command; this is not a hardware
         // timeout if that pump also stalls. Zero output remains an immediate stop.
@@ -152,13 +153,13 @@ void recompinput::update_rumble() {
             std::lock_guard lock{ InputState.controllers_mutex };
             if (recompinput::players::is_single_player_mode()) {
                 for (const auto &controller : InputState.detected_controllers) {
-                    do_rumble(controller, rumble_strength, duration);
+                    do_rumble(controller, rumble_strength, full_scale, duration);
                 }
             }
             else {
                 auto &player = recompinput::players::get_player(i);
                 if (player.controller != nullptr) {
-                    do_rumble(player.controller, rumble_strength, duration);
+                    do_rumble(player.controller, rumble_strength, full_scale, duration);
                 }
             }
         }

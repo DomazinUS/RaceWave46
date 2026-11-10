@@ -10,19 +10,22 @@ namespace recompinput {
     // of changes. A stop is never delayed.
     class RumbleLimiter {
     public:
-        static constexpr uint32_t level_shift = 11; // 32 levels.
+        static constexpr uint32_t levels = 32;
         static constexpr uint64_t min_change_interval_ms = 25;
 
-        static constexpr uint16_t quantize(uint16_t strength) {
-            const uint32_t level = (uint32_t(strength) + (1u << (level_shift - 1))) >> level_shift;
-            const uint32_t value = level << level_shift;
-            return value > 0xFFFF ? uint16_t(0xFFFF) : uint16_t(value);
+        // Levels are relative to full_scale, the output at full envelope for the
+        // player's strength setting, so every non-zero setting keeps all levels.
+        static constexpr uint16_t quantize(uint16_t strength, uint16_t full_scale) {
+            if (full_scale == 0) return 0;
+            const uint32_t clamped = strength < full_scale ? strength : full_scale;
+            const uint32_t level = (clamped * levels + full_scale / 2) / full_scale;
+            return uint16_t(level * full_scale / levels);
         }
 
         // Returns the strength to hand to SDL. SDL only issues a driver command
         // when this differs from the previous call.
-        uint16_t next(uint16_t requested, uint64_t now_ms) {
-            const uint16_t target = quantize(requested);
+        uint16_t next(uint16_t requested, uint16_t full_scale, uint64_t now_ms) {
+            const uint16_t target = quantize(requested, full_scale);
             if (target == held_) return held_;
             if (target == 0 || !changed_ || now_ms < last_change_ms_ ||
                 now_ms - last_change_ms_ >= min_change_interval_ms) {
