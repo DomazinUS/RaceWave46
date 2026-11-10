@@ -824,6 +824,12 @@ recompui::Element* recompui::ContextId::get_focused_element() {
     }
 
     for (const auto& resource : opened_context->resources) {
+        // A slot is reserved before its element is constructed, so this can be
+        // called from an element's constructor while its own slot is still
+        // empty. Skip empty slots and non-element resources (styles).
+        if (resource == nullptr || !resource->is_element()) {
+            continue;
+        }
         recompui::Element *element = static_cast<Element*>(resource.get());
         if (element->id == focused->GetId()) {
             return element;
