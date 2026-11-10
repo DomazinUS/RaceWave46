@@ -9,6 +9,11 @@ target_compile_features(wr64_game_rumble_test PRIVATE cxx_std_20)
 target_include_directories(wr64_game_rumble_test PRIVATE
     "${CMAKE_CURRENT_LIST_DIR}/stubs" "${WR64_SOURCE_ROOT}/include")
 add_test(NAME game_rumble_semantics COMMAND wr64_game_rumble_test)
+add_executable(wr64_rumble_limiter_test rumble_limiter_test.cpp)
+target_compile_features(wr64_rumble_limiter_test PRIVATE cxx_std_20)
+target_include_directories(wr64_rumble_limiter_test PRIVATE
+    "${WR64_SOURCE_ROOT}/lib/RecompFrontend/recompinput/include")
+add_test(NAME rumble_output_limiter COMMAND wr64_rumble_limiter_test)
 add_library(wr64_controller_smoke_compile OBJECT "${WR64_SOURCE_ROOT}/src/wr64_controller_smoke.cpp")
 target_compile_features(wr64_controller_smoke_compile PRIVATE cxx_std_20)
 target_include_directories(wr64_controller_smoke_compile PRIVATE

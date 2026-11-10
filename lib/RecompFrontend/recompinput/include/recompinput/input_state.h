@@ -10,6 +10,7 @@
 
 #include "ultramodern/input.hpp"
 #include "recompinput/recompinput.h"
+#include "recompinput/rumble_limiter.h"
 
 namespace recompinput {
     struct ControllerState {
@@ -20,6 +21,7 @@ namespace recompinput {
         std::array<float, 2> rotation_delta{};
         std::array<float, 2> pending_rotation_delta{};
         bool rumble_failed;
+        RumbleLimiter rumble_limiter{};
 
         ControllerState() : controller{}, latest_accelerometer{}, motion{}, prev_gyro_timestamp{}, rotation_delta{}, pending_rotation_delta{}, rumble_failed{} {
             motion.Reset();

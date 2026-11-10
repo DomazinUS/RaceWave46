@@ -2,6 +2,7 @@
 #include <mutex>
 #include <span>
 #include <atomic>
+#include <chrono>
 #include <cstdio>
 
 #include "recompinput/recompinput.h"
@@ -77,8 +78,9 @@ void recompinput::reset_rumble() {
     InputState.rumble_active.fill(false);
     InputState.cur_rumble.fill(0.0f);
     std::lock_guard lock{ InputState.controllers_mutex };
-    for (const auto& [id, state] : InputState.controller_states) {
+    for (auto& [id, state] : InputState.controller_states) {
         (void)id;
+        state.rumble_limiter.reset();
         if (state.controller != nullptr && SDL_GameControllerGetAttached(state.controller)) {
             SDL_JoystickRumble(SDL_GameControllerGetJoystick(state.controller), 0, 0, 0);
         }
@@ -102,6 +104,10 @@ void recompinput::update_rumble() {
         if (state.rumble_failed) {
            return;
         }
+        const uint64_t now_ms = uint64_t(std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+        rumble_strength = state.rumble_limiter.next(rumble_strength, now_ms);
+        if (rumble_strength == 0) duration = 0;
         // SDL maps DualSense low/high output to its left/right actuators.
         // Send the existing mono N64 envelope to both; retain the established
         // high-channel response for other controllers and USB adapters.
