@@ -38,3 +38,16 @@
 # STILL UNUSED: buttons b2 b3 b4 b5 b10 b12 b13 b14 b15, axes a2 a5.
 # Free for guide, or for anything a later stage wants.
 030095fcc82d00006928000000000000,8BitDo N64 Modkit,a:b0,x:b1,back:b9,start:b11,leftshoulder:b6,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:b8,righttrigger:b7,platform:Windows,
+
+# Generic Chinese N64 USB controller, transparent-red three-prong variant.
+# User-mapped physical controls: A=b5, B=b4, Start=b9, Z=b8, L=b6, R=b7;
+# C up/right/down/left=b0/b1/b2/b3; stick=a0/a1; D-pad=hat0.
+# Windows observations: SDL2 2.32.10 CRC 8630, SDL2 2.26.3 CRC 8e4f,
+# SDL3 3.4.18 Microntek USB Joystick alias CRC 79be. 4 axes/12 buttons/1 hat.
+# N64Recomp defaults read B as WEST and R as right trigger. C uses right axes.
+# Identity collisions for 0079:0006 remain possible, including SDL CRC fallback;
+# review the measured layout before adopting this profile for another variant.
+# The measured controller has no physical Select/Back assignment.
+03000000790000000600000000000000,Generic Chinese N64 USB Controller N64Recomp,a:b5,x:b4,start:b9,leftshoulder:b6,lefttrigger:b8,righttrigger:b7,leftx:a0,lefty:a1,+rightx:b1,-rightx:b3,+righty:b2,-righty:b0,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,crc:8630,platform:Windows,
+03000000790000000600000000000000,Generic Chinese N64 USB Controller N64Recomp,a:b5,x:b4,start:b9,leftshoulder:b6,lefttrigger:b8,righttrigger:b7,leftx:a0,lefty:a1,+rightx:b1,-rightx:b3,+righty:b2,-righty:b0,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,crc:79be,platform:Windows,
+03000000790000000600000000000000,Generic Chinese N64 USB Controller N64Recomp,a:b5,x:b4,start:b9,leftshoulder:b6,lefttrigger:b8,righttrigger:b7,leftx:a0,lefty:a1,+rightx:b1,-rightx:b3,+righty:b2,-righty:b0,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,crc:8e4f,platform:Windows,
